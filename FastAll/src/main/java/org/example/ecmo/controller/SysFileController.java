@@ -94,10 +94,10 @@ public class SysFileController {
         wrapper.eq(StrUtil.isNotBlank(fileExt), SysFileInfo::getFileExt, fileExt);
         
         // 增加日期范围过滤
-        wrapper.ge(beginTime != null, SysFileInfo::getCreateTime, beginTime);
-        wrapper.le(endTime != null, SysFileInfo::getCreateTime, endTime);
+        wrapper.ge(beginTime != null, SysFileInfo::getCreatedAt, beginTime);
+        wrapper.le(endTime != null, SysFileInfo::getCreatedAt, endTime);
         
-        wrapper.orderByDesc(SysFileInfo::getCreateTime);
+        wrapper.orderByDesc(SysFileInfo::getCreatedAt);
         return new JsonResult<>(200, sysFileInfoService.page(page, wrapper), "查询成功");
     }
 

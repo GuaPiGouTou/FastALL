@@ -1,5 +1,6 @@
 package org.example.ecmo.aspect;
 
+import cn.dev33.satoken.stp.StpUtil;
 import com.alibaba.fastjson.JSON;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
@@ -26,6 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
+import java.util.concurrent.Executor;
 
 @Aspect
 @Component
@@ -34,7 +36,7 @@ public class AuditLogAspect {
     SysOperLogMapper sysOperLogMapper;
     @Qualifier("logExecutor")
     @Autowired
-    ThreadPoolTaskExecutor logExecutor;
+    Executor logExecutor;
     @Pointcut("@annotation(org.example.ecmo.annotation.AuditLog)")
     public void logPointCut(){
     }
@@ -64,8 +66,19 @@ public class AuditLogAspect {
             operLog.setTitle(auditLog.title());
             operLog.setBusinessType(auditLog.businessType());
         }
-        //异步入库日志
-        logExecutor.execute(()->{
+        // 1. 在主线程捕获当前登录人 ID
+        Long loginId = null;
+        try {
+            loginId = StpUtil.getLoginIdAsLong();
+        } catch (Exception e) {
+            // 忽略未登录导致的异常
+        }
+        
+        final Long finalLoginId = loginId;
+        // 2. 传入异步任务
+        logExecutor.execute(() -> {
+            operLog.setOperId(finalLoginId);
+            System.out.println(">>> [异步日志] 成功记录操作人 ID: " + finalLoginId);
             sysOperLogMapper.insert(operLog);
         });
     }
@@ -83,7 +96,7 @@ public class AuditLogAspect {
         operLog.setOperTime(LocalDateTime.now());         // 操作时间
         operLog.setStatus(1);
         operLog.setErrorMsg(e.getMessage());
-        operLog.setJsonResult(JSON.toJSONString(e));     // 返回结果
+        operLog.setJsonResult(e.getMessage());     // 必须修改：Java 17 不支持直接序列化 Exception 对象
         //获取 方法签名
         MethodSignature signature  = (MethodSignature) joinPoint.getSignature();
         //获取方法
@@ -95,8 +108,19 @@ public class AuditLogAspect {
             operLog.setTitle(annotation.title());
             operLog.setBusinessType(annotation.businessType());
         }
-        //异步入库日志
-        logExecutor.execute(()->{
+        // 1. 在主线程捕获当前登录人 ID
+        Long loginId = null;
+        try {
+            loginId = StpUtil.getLoginIdAsLong();
+        } catch (Exception e1) {
+            // 忽略未登录导致的异常
+        }
+        
+        final Long finalLoginId = loginId;
+        // 2. 传入异步任务
+        logExecutor.execute(() -> {
+            operLog.setOperId(finalLoginId);
+            System.out.println(">>> [异步日志] 成功记录操作人 ID: " + finalLoginId);
             sysOperLogMapper.insert(operLog);
         });
 

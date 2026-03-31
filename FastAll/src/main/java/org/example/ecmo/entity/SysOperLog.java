@@ -35,6 +35,9 @@ public class SysOperLog implements Serializable {
     private Integer status;
     
     private String errorMsg;
+
+    /** 操作人 ID */
+    private Long operId;
     
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private LocalDateTime operTime;

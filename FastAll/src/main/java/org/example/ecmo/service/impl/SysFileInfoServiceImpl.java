@@ -146,7 +146,7 @@ public class SysFileInfoServiceImpl extends ServiceImpl<SysFileInfoMapper, SysFi
                 .eq(SysFileInfo::getBizType, bizType)
                 .eq(SysFileInfo::getBizId, bizId)
                 .orderByAsc(SysFileInfo::getSortOrder)
-                .orderByAsc(SysFileInfo::getCreateTime));
+                .orderByAsc(SysFileInfo::getCreatedAt));
     }
 
     @Override
