@@ -4,8 +4,8 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                checkout([$class: 'GitSCM', branches: [[name: 'main']], userRemoteConfigs: [[url: 'https://github.com/GuaPiGouTou/FastALL.git', credentialsId: 'githubssh
-']]])
+                // 请确保 'githubssh' 是你在 Jenkins 中创建的凭据 ID
+                checkout([$class: 'GitSCM', branches: [[name: 'main']], userRemoteConfigs: [[url: 'git@github.com:GuaPiGouTou/FastALL.git', credentialsId: 'githubssh']]])
             }
         }
 
