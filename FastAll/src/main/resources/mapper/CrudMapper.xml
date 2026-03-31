@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.ecmo.mapper.CrudMapper">
+
+    <!-- 获取表数量 -->
+    <select id="getTableCount" resultType="int">
+        SELECT COUNT(*) FROM module WHERE status = 1
+    </select>
+
+    <!-- 获取总记录数 -->
+    <select id="getTotalRecords" resultType="long">
+        SELECT COALESCE(SUM(table_rows), 0) 
+        FROM information_schema.tables 
+        WHERE table_schema = DATABASE()
+    </select>
+
+    <!-- 获取存储占用 -->
+    <select id="getStorageUsed" resultType="string">
+        SELECT CONCAT(ROUND(COALESCE(SUM(data_length + index_length), 0) / 1024 / 1024, 2), ' MB')
+        FROM information_schema.tables 
+        WHERE table_schema = DATABASE()
+    </select>
+
+    <!-- 获取本周新增记录数 -->
+    <select id="getWeeklyNewRecords" resultType="int">
+        SELECT COALESCE(COUNT(*), 0)
+        FROM module 
+        WHERE create_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+    </select>
+
+    <!-- 获取数据排行 -->
+    <select id="getDataRanking" resultType="map">
+        SELECT 
+            m.table_name as tableName,
+            m.module_name as moduleName,
+            COALESCE(t.table_rows, 0) as count,
+            CASE 
+                WHEN (SELECT MAX(table_rows) FROM information_schema.tables WHERE table_schema = DATABASE()) > 0 
+                THEN ROUND(COALESCE(t.table_rows, 0) * 100.0 / (SELECT MAX(table_rows) FROM information_schema.tables WHERE table_schema = DATABASE()))
+                ELSE 0 
+            END as percentage
+        FROM module m
+        LEFT JOIN information_schema.tables t ON m.table_name = t.table_name AND t.table_schema = DATABASE()
+        WHERE m.status = 1
+        ORDER BY COALESCE(t.table_rows, 0) DESC
+        LIMIT 5
+    </select>
+
+    <!-- 创建表 -->
+    <insert id="createTable">
+        INSERT INTO module (module_name, table_name, description, status, create_time, update_time)
+        VALUES (#{moduleName}, #{tableName}, #{description}, 1, NOW(), NOW())
+    </insert>
+
+    <!-- 保存数据 -->
+    <insert id="saveData">
+        INSERT INTO ${tableName}
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <foreach collection="data.entrySet()" item="value" index="key" separator=",">
+                ${key}
+            </foreach>
+            , created_time, updated_time
+        </trim>
+        <trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+            <foreach collection="data.entrySet()" item="value" index="key" separator=",">
+                #{value}
+            </foreach>
+            , NOW(), NOW()
+        </trim>
+    </insert>
+
+    <!-- 更新数据 -->
+    <update id="updateData">
+        UPDATE ${tableName}
+        <set>
+            <foreach collection="data.entrySet()" item="value" index="key" separator=",">
+                ${key} = #{value}
+            </foreach>
+            , updated_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- 新增字段配置 -->
+    <insert id="addFieldConfig">
+        INSERT INTO sys_field_config (table_name, prop, label, ui_type, options, is_show_in_list, sort_order, create_time, update_time)
+        VALUES (#{tableName}, #{prop}, #{label}, #{uiType}, #{options}, #{isShowInList}, #{sortOrder}, NOW(), NOW())
+    </insert>
+
+    <!-- 修改字段配置 -->
+    <update id="updateFieldConfig">
+        UPDATE sys_field_config
+        SET label = #{label},
+            ui_type = #{uiType},
+            options = #{options},
+            is_show_in_list = #{isShowInList},
+            sort_order = #{sortOrder},
+            update_time = NOW()
+        WHERE table_name = #{tableName} AND prop = #{prop}
+    </update>
+
+</mapper>

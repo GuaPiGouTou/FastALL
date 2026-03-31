@@ -1,0 +1,60 @@
+# 文件存储配置
+file:
+  storage:
+    type: minio
+  local:
+    path: E:/ecmo_uploads/
+    prefix: http://localhost:8080/files/
+  minio:
+    endpoint: http://124.223.43.124:9000
+    accessKey: minioadmin
+    secretKey: Nfctbfqljt9.22
+    bucket: fast-data
+  allowed-extensions: pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,json,xml,jpg,jpeg,png,gif,bmp,svg,zip,rar,7z,tar,gz
+  max-size: 104857600
+
+# 敏感配置加密
+encrypt:
+  key: fastcrud-2026-secret
+
+# 验证码配置
+aj:
+  captcha:
+    cache-type: redis
+    type: blockPuzzle
+    water-mark: FastCRUD
+    slip-offset: 5
+    aes-status: true
+    interference-options: 1
+    expire-second: 120
+
+spring:
+  application:
+    name: FastCRUD
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  redis:
+    host: 124.223.43.124
+    port: 6379
+    password: Redis@123456
+    database: 0
+  servlet:
+    multipart:
+      max-file-size: 2GB
+      max-request-size: 2GB
+  datasource:
+    url: jdbc:mysql://124.223.43.124:3306/FastCRUD?useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&allowMultiQueries=true&useSSL=false&allowPublicKeyRetrieval=true&tinyInt1isBit=false
+    username: guapigoutou
+    password: Nfctbfqljt9.22!
+    driver: com.mysql.cj.jdbc.Driver
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/*.sql
+      continue-on-error: true
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  mapper-locations: classpath:mapper/*.xml
