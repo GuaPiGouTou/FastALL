@@ -1,26 +1,19 @@
 pipeline {
     agent any
 
-    tools {
-        // 名称需与 Jenkins 全局工具配置中一致
-        maven 'Maven_3.8'
-        nodejs 'NodeJS_16'
-    }
-
     stages {
         stage('Checkout') {
             steps {
-                // 如果仓库地址或凭据有变化，请修改此处
-                checkout([$class: 'GitSCM', branches: [[name: 'main']], userRemoteConfigs: [[url: 'https://github.com/GuaPiGouTou/FastALL.git', credentialsId: 'GitHub']]])
+                checkout([$class: 'GitSCM', branches: [[name: 'main']], userRemoteConfigs: [[url: 'https://github.com/GuaPiGouTou/FastALL.git', credentialsId: 'githubssh
+']]])
             }
         }
 
-        stage('Build & Deploy') {
+        stage('Deploy All') {
             steps {
                 echo '>>> 正在启动部署流程...'
-                // 1. 给部署脚本添加可执行权限
+                // 直接通过 Shell 执行脚本，不再依赖 Jenkins 插件工具
                 sh 'chmod +x deploy_all.sh'
-                // 2. 执行脚本 (脚本内含后台运行逻辑，不会挂起流水线)
                 sh './deploy_all.sh'
             }
         }
