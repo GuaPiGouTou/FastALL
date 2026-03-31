@@ -1429,7 +1429,7 @@ onMounted(() => refreshData())
 .toggle-btn.active { background: #fff; color: #409EFF; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
 
 .modules-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
-.module-card { background: #fff; border: 1px solid #ebeef5; border-radius: 8px; padding: 18px; height: 140px; display: flex; flex-direction: column; cursor: pointer; transition: all 0.2s; }
+.module-card { background: #fff; border: 1px solid #ebeef5; border-radius: 8px; padding: 18px; height: 200px; display: flex; flex-direction: column; cursor: pointer; transition: all 0.2s; }
 .module-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-color: #dcdfe6; transform: translateY(-3px); }
 .m-card-header { display: flex; justify-content: space-between; margin-bottom: 15px; }
 .m-icon { width: 36px; height: 36px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
