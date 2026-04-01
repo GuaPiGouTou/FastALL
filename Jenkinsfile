@@ -5,8 +5,8 @@ pipeline {
         nodejs 'node-24'
     }
     environment {
-        BACKEND_DIR = '/opt/jenkins_home/fastall/backend'    // 修正路径
-        FRONTEND_DIR = '/opt/jenkins_home/fastall/frontend'  // 修正路径
+        BACKEND_DIR = '/opt/jenkins_home/fastall/backend'
+        FRONTEND_DIR = '/opt/jenkins_home/fastall/frontend'
     }
 
     stages {
@@ -31,7 +31,6 @@ pipeline {
                 dir('FastAll/html') {
                     sh 'npm install'
                     sh 'npm run build'
-                    sh "mkdir -p ${FRONTEND_DIR}"          // 添加创建目录
                     sh "rm -rf ${FRONTEND_DIR}/*"
                     sh "cp -r dist/* ${FRONTEND_DIR}/"
                 }
@@ -40,8 +39,8 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sh 'ssh -o BatchMode=yes ubuntu@127.0.0.1 "sudo systemctl restart backend"'
-                sh 'ssh -o BatchMode=yes ubuntu@127.0.0.1 "sudo systemctl reload nginx"'
+                sh 'sudo systemctl restart backend'
+                sh 'sudo systemctl reload nginx'
             }
         }
     }
