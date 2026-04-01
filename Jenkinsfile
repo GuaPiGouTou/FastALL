@@ -7,7 +7,7 @@ pipeline {
     }
 
     environment {
-        DEPLOY_BASE = '/var/jenkins_home/fastall'
+        BASE_DIR="/var/jenkins_home/fastall"
     }
 
     stages {
@@ -51,11 +51,12 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh '''
-                      echo "构建产物已复制到 /opt/jenkins_home/fastall"
-                      cd /opt/jenkins_home/fastall
-                      chmod +x start_all.sh stop_all.sh restart.sh
-                      # 执行重启脚本
-                      ./restart.sh
+                    echo "构建产物已复制到 /var/jenkins_home/fastall"
+                    cd /var/jenkins_home/fastall
+                    # 确保脚本可执行
+                    chmod +x start_all.sh stop_all.sh restart.sh
+                    # 执行重启脚本（如需 sudo，请提前配置免密）
+                    ./restart.sh
                 '''
             }
         }
