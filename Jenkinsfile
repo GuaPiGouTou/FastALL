@@ -29,6 +29,7 @@ pipeline {
                 sh '''
                     cd FastAll
                     mvn clean package -DskipTests
+                    mkdir -p ${DEPLOY_BASE}/backend
                     cp target/ECMO-0.0.1-SNAPSHOT.jar ${DEPLOY_BASE}/backend/app.jar
                 '''
             }
@@ -37,11 +38,12 @@ pipeline {
         stage('Build Frontend') {
             steps {
                 sh '''
-                    cd FastAll/html
-                    npm install
-                    npm run build
-                    rm -rf ${DEPLOY_BASE}/frontend/*
-                    cp -r dist/* ${DEPLOY_BASE}/frontend/
+                      cd FastAll/html
+                      npm install
+                      npm run build
+                      mkdir -p ${DEPLOY_BASE}/frontend
+                      rm -rf ${DEPLOY_BASE}/frontend/*
+                      cp -r dist/* ${DEPLOY_BASE}/frontend/
                 '''
             }
         }
