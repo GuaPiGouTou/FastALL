@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        maven 'maven-3.8'   // 与 Global Tool Configuration 中配置的名称一致
+        maven 'maven-3.8'
         nodejs 'node-24'
     }
 
@@ -27,9 +27,8 @@ pipeline {
         stage('Build Backend') {
             steps {
                 sh '''
-                    # 当前已在仓库根目录（FastALL）
+                    cd FastAll
                     mvn clean package -DskipTests
-                    # 假设生成的 jar 名称固定为 ECMO-0.0.1-SNAPSHOT.jar
                     cp target/ECMO-0.0.1-SNAPSHOT.jar ${DEPLOY_BASE}/backend/app.jar
                 '''
             }
@@ -38,9 +37,9 @@ pipeline {
         stage('Build Frontend') {
             steps {
                 sh '''
-                    cd html
+                    cd FastAll/html
                     npm install
-                    npm run build   # 生成生产构建，输出目录通常是 dist/
+                    npm run build
                     rm -rf ${DEPLOY_BASE}/frontend/*
                     cp -r dist/* ${DEPLOY_BASE}/frontend/
                 '''
@@ -50,7 +49,6 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh '''
-                    # 调用重启脚本（需预先在宿主机创建 /opt/fastall/restart.sh 并配置 sudo 免密）
                     sudo ${DEPLOY_BASE}/restart.sh
                 '''
             }
