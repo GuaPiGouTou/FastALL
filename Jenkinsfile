@@ -51,8 +51,11 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh '''
-                      echo "构建产物已复制到 /var/jenkins_home/fastall"
-                      echo "请手动在宿主机执行: sudo /opt/jenkins_home/fastall/restart.sh"
+                      echo "构建产物已复制到 /opt/jenkins_home/fastall"
+                      cd /opt/jenkins_home/fastall
+                      chmod +x start_all.sh stop_all.sh restart.sh
+                      # 执行重启脚本
+                      ./restart.sh
                 '''
             }
         }
