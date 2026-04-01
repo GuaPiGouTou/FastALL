@@ -7,7 +7,7 @@ pipeline {
     }
 
     environment {
-        DEPLOY_BASE = '/opt/fastall'
+        DEPLOY_BASE = '/var/jenkins_home/fastall'
     }
 
     stages {

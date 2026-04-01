@@ -46,7 +46,7 @@
           <el-card shadow="never" class="overview-card">
             <div class="overview-item">
               <div class="overview-icon" style="background-color: #f59e0b20; color: #f59e0b">
-                <el-icon><HardDrive /></el-icon>
+                <el-icon><MessageBox  /></el-icon>
               </div>
               <div class="overview-info">
                 <div class="overview-label">存储占用</div>
@@ -248,9 +248,9 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { 
-  DataAnalysis, Refresh, Files, DataLine, HardDrive, DocumentAdd, 
-  TrendCharts, AlarmClock, Database, Link, MagicStick, Upload, 
+import {
+  DataAnalysis, Refresh, Files, DataLine, MessageBox, DocumentAdd,
+  TrendCharts, AlarmClock, Database, Link, MagicStick, Upload,
   Plus, Grid, View, Edit, Delete
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
