@@ -28,7 +28,7 @@
         <el-col :span="6">
           <el-card class="stat-card">
             <div class="stat-content">
-              <el-icon class="stat-icon" style="color: #409EFF"><Table /></el-icon>
+              <el-icon class="stat-icon" style="color: #409EFF"><DataBoard /></el-icon>
               <div class="stat-info">
                 <div class="stat-value">{{ overview.tableCount }}</div>
                 <div class="stat-label">数据表总数</div>
@@ -140,7 +140,7 @@
                 <span>导入 JSON</span>
               </div>
               <div class="build-option" @click="importFromDb">
-                <el-icon size="32"><Database /></el-icon>
+                <el-icon size="32"><Cpu /></el-icon>
                 <span>从数据库导入</span>
               </div>
               <div class="build-option" @click="createEmptyTable">
@@ -332,7 +332,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
-  Connection, Table, DataLine, Coin, TrendCharts, Document, Database, Plus, Refresh,
+  Connection, DataBoard, DataLine, Coin, TrendCharts, Document, Cpu, Plus, Refresh,
   ArrowUp, ArrowDown, UploadFilled
 } from '@element-plus/icons-vue'
 import { getModuleList, deleteModule } from '@/api/crud'

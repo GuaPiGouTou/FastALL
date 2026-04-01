@@ -249,8 +249,8 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import {
-  DataAnalysis, Refresh, Files, DataLine, MessageBox, DocumentAdd,
-  TrendCharts, AlarmClock, Database, Link, MagicStick, Upload,
+  DataAnalysis, Refresh, Files, DataLine, Message, Document,
+  TrendCharts, AlarmClock, DataBase, Link, MagicStick, Upload,
   Plus, Grid, View, Edit, Delete
 } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
