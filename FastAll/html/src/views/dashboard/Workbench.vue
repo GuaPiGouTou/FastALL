@@ -16,7 +16,7 @@
     <template v-if="dashboardVisible">
       <!-- 系统总览卡片 -->
       <el-row :gutter="20" class="overview-row">
-        <el-col :span="6">
+        <el-col :xs="24" :sm="12" :lg="6">
           <el-card shadow="never" class="overview-card">
             <div class="overview-item">
               <div class="overview-icon" style="background-color: #6366f120; color: #6366f1">
@@ -29,7 +29,7 @@
             </div>
           </el-card>
         </el-col>
-        <el-col :span="6">
+        <el-col :xs="24" :sm="12" :lg="6">
           <el-card shadow="never" class="overview-card">
             <div class="overview-item">
               <div class="overview-icon" style="background-color: #10b98120; color: #10b981">
@@ -42,11 +42,11 @@
             </div>
           </el-card>
         </el-col>
-        <el-col :span="6">
+        <el-col :xs="24" :sm="12" :lg="6">
           <el-card shadow="never" class="overview-card">
             <div class="overview-item">
               <div class="overview-icon" style="background-color: #f59e0b20; color: #f59e0b">
-                <el-icon><MessageBox  /></el-icon>
+                <el-icon><MessageBox /></el-icon>
               </div>
               <div class="overview-info">
                 <div class="overview-label">存储占用</div>
@@ -55,7 +55,7 @@
             </div>
           </el-card>
         </el-col>
-        <el-col :span="6">
+        <el-col :xs="24" :sm="12" :lg="6">
           <el-card shadow="never" class="overview-card">
             <div class="overview-item">
               <div class="overview-icon" style="background-color: #ef444420; color: #ef4444">
@@ -72,7 +72,7 @@
 
       <el-row :gutter="20" class="content-row">
         <!-- 数据排行 -->
-        <el-col :span="12">
+        <el-col :xs="24" :lg="12">
           <el-card shadow="never" class="content-card">
             <template #header>
               <div class="card-header">
@@ -93,7 +93,7 @@
         </el-col>
 
         <!-- 系统配额 -->
-        <el-col :span="12">
+        <el-col :xs="24" :lg="12">
           <el-card shadow="never" class="content-card">
             <template #header>
               <div class="card-header">
@@ -106,11 +106,11 @@
                   <div class="quota-name">{{ item.name }}</div>
                   <div class="quota-usage">{{ item.usage }} / {{ item.limit }}</div>
                 </div>
-                <el-progress 
-                  :percentage="item.percentage" 
-                  :color="getQuotaColor(item.percentage)"
-                  :stroke-width="8"
-                  :show-text="false"
+                <el-progress
+                    :percentage="item.percentage"
+                    :color="getQuotaColor(item.percentage)"
+                    :stroke-width="8"
+                    :show-text="false"
                 />
               </div>
             </div>
@@ -128,7 +128,7 @@
       </template>
       <div class="db-config-content">
         <el-row :gutter="20">
-          <el-col :span="12">
+          <el-col :xs="24" :lg="12">
             <el-form :model="dbConfig" label-width="120px">
               <el-form-item label="数据库类型">
                 <el-select v-model="dbConfig.type" style="width: 100%">
@@ -165,7 +165,7 @@
               </el-form-item>
             </el-form>
           </el-col>
-          <el-col :span="12">
+          <el-col :xs="24" :lg="12">
             <el-card shadow="never" class="connection-status-card">
               <template #header>
                 <div class="card-header">
@@ -227,7 +227,7 @@
           <el-button type="primary" :icon="Plus" @click="createTable">创建新表</el-button>
         </div>
       </template>
-      <el-table :data="tables" style="width: 100%">
+      <el-table :data="tables" style="width: 100%" border>
         <el-table-column prop="tableName" label="表名" min-width="150" />
         <el-table-column prop="description" label="描述" min-width="200" />
         <el-table-column prop="recordCount" label="记录数" width="100" />
@@ -344,8 +344,11 @@ const testConnection = async () => {
     // 模拟连接测试
     await new Promise(resolve => setTimeout(resolve, 1500))
     connectionStatus.status = 'connected'
-    connectionStatus.responseTime = '8ms'
-    connectionStatus.lastConnected = new Date().toISOString().replace('T', ' ').substring(0, 19)
+    connectionStatus.dbType = dbConfig.type === 'mysql' ? 'MySQL' :
+        dbConfig.type === 'postgresql' ? 'PostgreSQL' :
+            dbConfig.type === 'sqlite' ? 'SQLite' : 'MongoDB'
+    connectionStatus.responseTime = Math.floor(Math.random() * 20 + 5) + 'ms'
+    connectionStatus.lastConnected = new Date().toLocaleString()
     ElMessage.success('连接测试成功')
   } catch (error) {
     connectionStatus.status = 'disconnected'
@@ -385,13 +388,16 @@ onMounted(() => {
   padding: 24px;
   background-color: #f8fafc;
   min-height: calc(100vh - 84px);
+  box-sizing: border-box;
 }
 
 .page-header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  gap: 16px;
 }
 
 .page-title {
@@ -406,7 +412,7 @@ onMounted(() => {
 
 .page-subtitle {
   color: #64748b;
-  margin: 4px 0 0 36px;
+  margin: 4px 0 0 0;
   font-size: 14px;
 }
 
@@ -414,6 +420,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .overview-row {
@@ -424,6 +431,7 @@ onMounted(() => {
   border: none;
   border-radius: 16px;
   transition: all 0.3s ease;
+  height: 100%;
 }
 
 .overview-card:hover {
@@ -435,6 +443,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 16px;
+  height: 100%;
 }
 
 .overview-icon {
@@ -445,6 +454,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   font-size: 24px;
+  flex-shrink: 0;
 }
 
 .overview-info {
@@ -472,6 +482,7 @@ onMounted(() => {
   border-radius: 16px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   min-height: 300px;
+  height: 100%;
 }
 
 .card-header {
@@ -508,6 +519,7 @@ onMounted(() => {
   font-weight: 700;
   margin-right: 16px;
   font-size: 14px;
+  flex-shrink: 0;
 }
 
 .ranking-index.first {
