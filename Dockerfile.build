@@ -1,0 +1,11 @@
+# 基于官方 Maven 镜像（含 JDK 11）
+FROM maven:3.8-openjdk-11
+
+# 安装 Node.js 18.x 和 npm
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
+    && apt-get clean \
+    && node -v && npm -v
+
+# 设置工作目录
+WORKDIR /app
