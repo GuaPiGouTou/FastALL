@@ -27,10 +27,8 @@ pipeline {
         stage('Build Backend') {
             steps {
                 sh '''
-                    cd FastAll
-                    mvn clean package -DskipTests
-                    mkdir -p ${DEPLOY_BASE}/backend
-                    cp target/ECMO-0.0.1-SNAPSHOT.jar ${DEPLOY_BASE}/backend/app.jar
+                    mkdir -p /var/jenkins_home/fastall/backend
+                    cp target/ECMO-0.0.1-SNAPSHOT.jar /var/jenkins_home/fastall/backend/app.jar
                 '''
             }
         }
