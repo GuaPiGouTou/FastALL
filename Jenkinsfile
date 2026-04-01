@@ -1,73 +1,54 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'maven-3.8'
-        nodejs 'node-24'
-    }
-
     environment {
-        DEPLOY_BASE="/var/jenkins_home/fastall"
+        BACKEND_DIR = '/opt/jenkins_home/fastall/backend'    // 修正路径
+        FRONTEND_DIR = '/opt/jenkins_home/fastall/frontend'  // 修正路径
     }
 
     stages {
         stage('Checkout') {
             steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: 'main']],
-                    userRemoteConfigs: [[
-                        url: 'git@github.com:GuaPiGouTou/FastALL.git',
-                        credentialsId: 'sshGitHub'
-                    ]]
-                ])
+                checkout scm
             }
         }
 
         stage('Build Backend') {
             steps {
-                sh '''
-                   cd FastAll
-                   mvn clean package -DskipTests
-                   mkdir -p ${DEPLOY_BASE}/backend
-                   cp target/ECMO-0.0.1-SNAPSHOT.jar /var/jenkins_home/fastall/backend/app.jar
-                '''
+                dir('FastAll') {
+                    sh 'mvn clean package -DskipTests'
+                    sh "mkdir -p ${BACKEND_DIR}"
+                    sh "cp target/ECMO-0.0.1-SNAPSHOT.jar ${BACKEND_DIR}/app.jar"
+                }
             }
         }
 
         stage('Build Frontend') {
             steps {
-                sh '''
-                      cd FastAll/html
-                      npm install
-                      npm run build
-                      mkdir -p ${DEPLOY_BASE}/frontend
-                      rm -rf ${DEPLOY_BASE}/frontend/*
-                      cp -r dist/* ${DEPLOY_BASE}/frontend/
-                '''
+                dir('FastAll/html') {
+                    sh 'npm install'
+                    sh 'npm run build'
+                    sh "mkdir -p ${FRONTEND_DIR}"          // 添加创建目录
+                    sh "rm -rf ${FRONTEND_DIR}/*"
+                    sh "cp -r dist/* ${FRONTEND_DIR}/"
+                }
             }
         }
 
         stage('Deploy') {
             steps {
-                sh '''
-                    echo "构建产物已复制到 /var/jenkins_home/fastall"
-                    cd /var/jenkins_home/fastall
-                    # 确保脚本可执行
-                    chmod +x start_all.sh stop_all.sh restart.sh
-                    # 执行重启脚本（如需 sudo，请提前配置免密）
-                    ./restart.sh
-                '''
+                sh 'ssh -o BatchMode=yes ubuntu@127.0.0.1 "sudo systemctl restart backend"'
+                sh 'ssh -o BatchMode=yes ubuntu@127.0.0.1 "sudo systemctl reload nginx"'
             }
         }
     }
 
     post {
-        success {
-            echo '>>> 全自动流水线成功完成！前后端已部署并启动。'
+        always {
+            cleanWs()
         }
         failure {
-            echo '>>> 流水线运行失败，请检查控制台错误日志。'
+            echo '流水线运行失败，请检查控制台错误日志。'
         }
     }
 }
