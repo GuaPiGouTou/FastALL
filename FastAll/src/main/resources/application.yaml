@@ -9,8 +9,8 @@ file:
     secret-id: ${TENCENT_CLOUD_SECRET_ID:fake-id}
     secret-key: ${TENCENT_CLOUD_SECRET_KEY:fake-key}
     bucket: fast-data-1259261503
-    region: ap-nanjing
-    baseUrl: https://fast-data-1259261503.cos.ap-nanjing.myqcloud.com
+    region: ap-guangzhou
+    baseUrl: https://fast-data-1259261503.cos.ap-guangzhou.myqcloud.com
 
   allowed-extensions: pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,json,xml,jpg,jpeg,png,gif,bmp,svg,zip,rar,7z,tar,gz
   max-size: 104857600
