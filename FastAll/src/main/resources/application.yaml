@@ -6,10 +6,10 @@ file:
     path: E:/ecmo_uploads/
     prefix: http://localhost:8080/files/
   minio:
-    endpoint: http://124.223.43.124:9000
-    accessKey: minioadmin
-    secretKey: Nfctbfqljt9.22
-    bucket: fast-data
+    endpoint: ${MINIO_ENDPOINT:http://124.223.43.124:9000}
+    accessKey: ${MINIO_ACCESS_KEY:minioadmin}
+    secretKey: ${MINIO_SECRET_KEY:Nfctbfqljt9.22}
+    bucket: ${MINIO_BUCKET:fast-data}
   allowed-extensions: pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,json,xml,jpg,jpeg,png,gif,bmp,svg,zip,rar,7z,tar,gz
   max-size: 104857600
 
@@ -35,19 +35,19 @@ spring:
     pathmatch:
       matching-strategy: ant_path_matcher
   redis:
-    host: 124.223.43.124
-    port: 6379
-    password: Redis@123456
-    database: 0
+    host: ${REDIS_HOST:124.223.43.124}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:Redis@123456}
+    database: ${REDIS_DATABASE:0}
   servlet:
     multipart:
       max-file-size: 2GB
       max-request-size: 2GB
   datasource:
-    url: jdbc:mysql://124.223.43.124:3306/FastCRUD?useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&allowMultiQueries=true&useSSL=false&allowPublicKeyRetrieval=true&tinyInt1isBit=false
-    username: guapigoutou
-    password: Nfctbfqljt9.22!
-    driver: com.mysql.cj.jdbc.Driver
+    url: ${DATABASE_URL:jdbc:mysql://124.223.43.124:3306/FastCRUD?useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&allowMultiQueries=true&useSSL=false&allowPublicKeyRetrieval=true&tinyInt1isBit=false}
+    username: ${DATABASE_USERNAME:guapigoutou}
+    password: ${DATABASE_PASSWORD:Nfctbfqljt9.22!}
+    driver: ${DATABASE_DRIVER:com.mysql.cj.jdbc.Driver}
   sql:
     init:
       mode: always
