@@ -31,7 +31,8 @@ public class SysFileInfoServiceImpl extends ServiceImpl<SysFileInfoMapper, SysFi
             "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
             "txt", "csv", "json", "xml",
             "jpg", "jpeg", "png", "gif", "bmp", "svg",
-            "zip", "rar", "7z", "tar", "gz"
+            "zip", "rar", "7z", "tar", "gz",
+            "mp4", "avi", "mov", "wmv", "flv", "mkv"
     );
 
     @Autowired
