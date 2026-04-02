@@ -11,11 +11,7 @@ file:
     bucket: fast-data-1259261503
     region: ap-nanjing
     baseUrl: https://fast-data-1259261503.cos.ap-nanjing.myqcloud.com
-  minio:
-    endpoint: ${MINIO_ENDPOINT:http://124.223.43.124:9000}
 
-
-    bucket: ${MINIO_BUCKET:fast-data}
   allowed-extensions: pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,json,xml,jpg,jpeg,png,gif,bmp,svg,zip,rar,7z,tar,gz
   max-size: 104857600
 

@@ -148,8 +148,9 @@ public class SysFileController {
                 path = info.getFilePath();
             }
         } else {
-            storageType = "minio";
-            path = StrUtil.subAfter(info.getFilePath(), "/", true);
+            // 默认为本地存储
+            storageType = "localFileStorage";
+            path = info.getFilePath();
         }
 
         try (InputStream is = storageContext.downloadByType(storageType, path);
