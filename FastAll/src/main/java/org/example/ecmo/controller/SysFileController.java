@@ -134,8 +134,23 @@ public class SysFileController {
         }
 
         // 识别存储类型
-        String storageType = info.getFilePath().startsWith("/files/") ? "localFileStorage" : "minio";
-        String path = StrUtil.subAfter(info.getFilePath(), storageType.equals("localFileStorage") ? "/files/" : "/", true);
+        String storageType;
+        String path;
+        if (info.getFilePath().startsWith("/files/")) {
+            storageType = "localFileStorage";
+            path = StrUtil.subAfter(info.getFilePath(), "/files/", true);
+        } else if (info.getFilePath().contains("cos")) {
+            storageType = "cos";
+            int lastSlashIndex = info.getFilePath().lastIndexOf('/');
+            if (lastSlashIndex != -1) {
+                path = info.getFilePath().substring(lastSlashIndex + 1);
+            } else {
+                path = info.getFilePath();
+            }
+        } else {
+            storageType = "minio";
+            path = StrUtil.subAfter(info.getFilePath(), "/", true);
+        }
 
         try (InputStream is = storageContext.downloadByType(storageType, path);
              OutputStream os = response.getOutputStream()) {

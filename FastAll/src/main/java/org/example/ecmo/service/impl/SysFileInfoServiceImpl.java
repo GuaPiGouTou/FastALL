@@ -174,6 +174,15 @@ public class SysFileInfoServiceImpl extends ServiceImpl<SysFileInfoMapper, SysFi
         if (url.startsWith(filePrefix)) {
             path = StrUtil.subAfter(url, filePrefix, true);
             storageType = "localFileStorage";
+        } else if (url.contains("cos")) {
+            // 从COS URL中提取路径
+            int lastSlashIndex = url.lastIndexOf('/');
+            if (lastSlashIndex != -1) {
+                path = url.substring(lastSlashIndex + 1);
+            } else {
+                path = url;
+            }
+            storageType = "cos";
         } else {
             path = StrUtil.subAfter(url, "/", true);
             storageType = "minio";
