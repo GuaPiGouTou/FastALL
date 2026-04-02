@@ -6,6 +6,8 @@ file:
     path: /opt/jenkins_home/fastall/uploads
     prefix: http://localhost:8080/files/
   cos:
+    secret-id: ${TENCENT_CLOUD_SECRET_ID:fake-id}
+    secret-key: ${TENCENT_CLOUD_SECRET_KEY:fake-key}
     bucket: fast-data-1259261503
     region: ap-nanjing
     baseUrl: https://fast-data-1259261503.cos.ap-nanjing.myqcloud.com
