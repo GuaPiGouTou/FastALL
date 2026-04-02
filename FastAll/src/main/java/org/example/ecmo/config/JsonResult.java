@@ -99,6 +99,17 @@ public class JsonResult<T> {
     }
 
     /**
+     * 静态方法：返回成功响应
+     * @param data 响应数据
+     * @param msg 提示信息
+     * @param <T> 数据类型
+     * @return JsonResult
+     */
+    public static <T> JsonResult<T> success(T data, String msg) {
+        return new JsonResult<>(data, msg);
+    }
+
+    /**
      * 静态方法：返回错误响应
      * @param msg 错误信息
      * @param <T> 数据类型
