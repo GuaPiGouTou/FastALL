@@ -36,7 +36,7 @@
               将大文件拖拽至此处，或 <span class="highlight">点击选择文件</span>
             </div>
             <div class="upload-tip">
-              支持对 GxP 大型材料、SOP 流程附件进行分片断点续传（单文件最大 2GB）
+              支持对 GxP 大型材料、SOP 流程附件进行上传（单文件最大 2GB）
             </div>
           </div>
         </el-upload>
@@ -149,7 +149,7 @@ import { ref, computed } from 'vue'
 import { UploadFilled, FolderOpened, DocumentAdd, Document, Link, Close, Delete, Upload } from '@element-plus/icons-vue'
 import { ElMessage, ElNotification, ElMessageBox } from 'element-plus'
 import SparkMD5 from 'spark-md5'
-import { checkChunk, uploadChunk, mergeChunk } from '@/api/file'
+import { uploadFile } from '@/api/file'
 
 const uploadRef = ref(null)
 const fileQueue = ref([])
@@ -229,54 +229,22 @@ const calculateMD5 = (file) => {
 
 const handleUpload = async (row) => {
   try {
-    row.status = '解析中'
-    // 1. 计算全文件 MD5 (指纹)
-    const identifier = await calculateMD5(row.raw)
-    
-    // 2. 预检：查询哪些分片已存在
     row.status = '上传中'
-    const { data: uploadedChunks } = await checkChunk(identifier)
+    row.progress = 0
     
-    // 如果返回的是已存在的文件 URL (秒传场景)，直接处理
-    if (typeof uploadedChunks === 'string') {
-      row.progress = 100
-      row.status = '已完成'
-      successNotify(row.name)
-      return
-    }
-
-    // 3. 开始分片上传
-    const totalChunks = Math.ceil(row.size / CHUNK_SIZE)
-    const uploadedSet = new Set(uploadedChunks)
-    
-    // 并发控制：这里可以使用 Promise.all 或递归来控制并发深度，暂时简单处理
-    for (let i = 1; i <= totalChunks; i++) {
-      if (uploadedSet.has(i)) {
-        row.progress = Math.floor((i / totalChunks) * 100)
-        continue
+    // 模拟上传进度
+    const progressInterval = setInterval(() => {
+      if (row.progress < 90) {
+        row.progress += 10
       }
+    }, 200)
 
-      const start = (i - 1) * CHUNK_SIZE
-      const end = Math.min(row.size, i * CHUNK_SIZE)
-      const chunkFile = row.raw.slice(start, end)
-
-      const formData = new FormData()
-      formData.append('identifier', identifier)
-      formData.append('chunkNumber', i)
-      formData.append('totalChunks', totalChunks)
-      formData.append('chunkSize', chunkFile.size)
-      formData.append('file', chunkFile)
-
-      await uploadChunk(formData)
-      row.progress = Math.floor((i / totalChunks) * 100)
-    }
-
-    // 4. 发送合并请求
-    row.status = '合并中'
-    await mergeChunk(identifier, row.name)
+    // 使用普通上传接口
+    const { data: url } = await uploadFile(row.raw, 'file', null, 'document')
     
-    row.status = '已完成'
+    clearInterval(progressInterval)
     row.progress = 100
+    row.status = '已完成'
     successNotify(row.name)
 
   } catch (error) {
@@ -333,7 +301,7 @@ const clearQueue = () => {
 const successNotify = (name) => {
   ElNotification({
     title: '合规归档成功',
-    message: `文件 ${name} 已完成分片上传并链上固化`,
+    message: `文件 ${name} 已完成上传并链上固化`,
     type: 'success',
     position: 'bottom-right'
   })
