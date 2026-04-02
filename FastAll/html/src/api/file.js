@@ -15,7 +15,7 @@ export function uploadFile(file, bizType, bizId, fileType) {
   if (fileType) formData.append('fileType', fileType)
   
   return request({
-    url: '/api/file/upload',
+    url: '/file/upload',
     method: 'post',
     data: formData,
     headers: { 'Content-Type': 'multipart/form-data' }
@@ -29,7 +29,7 @@ export function uploadFile(file, bizType, bizId, fileType) {
  */
 export function getBizFiles(bizType, bizId) {
   return request({
-    url: '/api/file/biz-files',
+    url: '/file/biz-files',
     method: 'get',
     params: { bizType, bizId }
   })
@@ -40,7 +40,7 @@ export function getBizFiles(bizType, bizId) {
  */
 export function checkChunk(identifier) {
   return request({
-    url: '/api/file/chunk',
+    url: '/file/chunk',
     method: 'get',
     params: { identifier }
   })
@@ -75,7 +75,7 @@ export function mergeChunk(identifier, fileName) {
  */
 export function getFileList(params) {
   return request({
-    url: '/api/file/list',
+    url: '/file/list',
     method: 'get',
     params
   })
@@ -86,7 +86,7 @@ export function getFileList(params) {
  */
 export function deleteFile(id) {
   return request({
-    url: `/api/file/delete/${id}`,
+    url: `/file/delete/${id}`,
     method: 'delete'
   })
 }
@@ -96,7 +96,7 @@ export function deleteFile(id) {
  */
 export function updateFile(data) {
   return request({
-    url: '/api/file/update',
+    url: '/file/update',
     method: 'put',
     data
   })
@@ -107,7 +107,7 @@ export function updateFile(data) {
  */
 export function downloadFile(id) {
   return request({
-    url: `/api/file/download/${id}`,
+    url: `/file/download/${id}`,
     method: 'get',
     responseType: 'blob'
   })
