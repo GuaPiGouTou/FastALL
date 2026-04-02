@@ -51,7 +51,7 @@ export function checkChunk(identifier) {
  */
 export function uploadChunk(data) {
   return request({
-    url: '/api/file/chunk',
+    url: '/file/chunk',
     method: 'post',
     data,
     headers: { 'Content-Type': 'multipart/form-data' }
@@ -63,7 +63,7 @@ export function uploadChunk(data) {
  */
 export function mergeChunk(identifier, fileName) {
   return request({
-    url: '/api/file/chunk/merge',
+    url: '/file/chunk/merge',
     method: 'post',
     params: { identifier, fileName }
   })
