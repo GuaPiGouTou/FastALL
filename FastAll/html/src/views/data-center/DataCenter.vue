@@ -895,11 +895,11 @@ const getUiTypeFromDataType = (dataType, remarks) => {
   const r = (remarks || '').toLowerCase()
   
   if (r.includes('[image]') || r.includes('[file]')) return 'Attachment'
-  if (t.includes('INT') && !t.includes('BIGINT')) return 'InputNumber'
+  if (t.includes('INT') && !t.includes('BIGINT') && !t.includes('TINYINT')) return 'InputNumber'
   if (t.includes('BIGINT')) return 'InputNumber'
   if (t.includes('DECIMAL') || t.includes('FLOAT') || t.includes('DOUBLE')) return 'Currency'
   if (t.includes('DATE') || t.includes('TIME')) return 'DatePicker'
-  if (t.includes('TINYINT(1)')) return 'Switch'
+  if (t.includes('TINYINT')) return 'Switch'
   if (t.includes('TEXT')) return 'Textarea'
   if (t.includes('VARCHAR(500)')) {
     if (r.includes('image') || r.includes('file')) return 'Attachment'
@@ -1025,7 +1025,7 @@ const loadViewTableData = async () => {
             const uiType = getUiTypeFromDataType(col.dataType || col.COLUMN_TYPE, remarks)
             viewTableColumns.value.push({
               prop: col.columnName || col.COLUMN_NAME,
-              label: remarks.replace(/\[image\]|\[file\]/g, '').trim() || col.columnName || col.COLUMN_NAME,
+              label: remarks.replace(/\[.*?\]/g, '').trim() || col.columnName || col.COLUMN_NAME,
               dataType: col.dataType || col.COLUMN_TYPE,
               nullable: col.nullable,
               remarks,
@@ -1180,7 +1180,6 @@ const submitColumn = async () => {
   try {
     let dataType = 'VARCHAR(255)'
     if (newColData.value.uiType === 'InputNumber') dataType = 'INT'
-    else if (newColData.value.uiType === 'Currency') dataType = 'DECIMAL(10,2)'
     else if (newColData.value.uiType === 'DatePicker') dataType = 'DATETIME'
     else if (newColData.value.uiType === 'Switch') dataType = 'TINYINT(1)'
     else if (newColData.value.uiType === 'Rating') dataType = 'INT'
@@ -1190,6 +1189,8 @@ const submitColumn = async () => {
     let comment = newColData.value.label
     if (newColData.value.uiType === 'Select' && newColData.value.options) {
       comment = newColData.value.label + ' [' + newColData.value.options + ']'
+    } else if (newColData.value.uiType === 'Rating') {
+      comment = newColData.value.label + ' [rating]'
     } else if (newColData.value.uiType === 'Attachment') {
       comment = newColData.value.label + ' [file]'
       if (newColData.value.options) {
