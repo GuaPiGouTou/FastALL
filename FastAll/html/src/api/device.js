@@ -5,7 +5,7 @@ import request from '@/utils/request'
  */
 export function getDeviceList(params) {
   return request({
-    url: '/api/device/list',
+    url: '/device/list',
     method: 'get',
     params
   })
@@ -16,7 +16,7 @@ export function getDeviceList(params) {
  */
 export function addDevice(data) {
   return request({
-    url: '/api/device/add',
+    url: '/device/add',
     method: 'post',
     data
   })
@@ -27,7 +27,7 @@ export function addDevice(data) {
  */
 export function updateDevice(data) {
   return request({
-    url: '/api/device/update',
+    url: '/device/update',
     method: 'put',
     data
   })
@@ -38,7 +38,7 @@ export function updateDevice(data) {
  */
 export function deleteDevice(id) {
   return request({
-    url: `/api/device/delete/${id}`,
+    url: `/device/delete/${id}`,
     method: 'delete'
   })
 }

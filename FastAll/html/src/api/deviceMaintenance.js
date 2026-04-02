@@ -5,7 +5,7 @@ import request from '@/utils/request'
  */
 export function getMaintenanceList(deviceId) {
   return request({
-    url: `/api/device-maintenance/list/${deviceId}`,
+    url: `/device-maintenance/list/${deviceId}`,
     method: 'get'
   })
 }
@@ -15,7 +15,7 @@ export function getMaintenanceList(deviceId) {
  */
 export function addMaintenance(data) {
   return request({
-    url: '/api/device-maintenance/add',
+    url: '/device-maintenance/add',
     method: 'post',
     data
   })

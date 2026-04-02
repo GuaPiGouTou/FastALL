@@ -2,28 +2,28 @@ import request from '@/utils/request'
 
 export function getOverview() {
   return request({
-    url: '/api/data-center/overview',
+    url: '/data-center/overview',
     method: 'get'
   })
 }
 
 export function getDataRanking() {
   return request({
-    url: '/api/data-center/ranking',
+    url: '/data-center/ranking',
     method: 'get'
   })
 }
 
 export function getSystemQuota() {
   return request({
-    url: '/api/data-center/quota',
+    url: '/data-center/quota',
     method: 'get'
   })
 }
 
 export function saveDbConfig(data) {
   return request({
-    url: '/api/data-center/db-config',
+    url: '/data-center/db-config',
     method: 'post',
     data
   })
@@ -31,7 +31,7 @@ export function saveDbConfig(data) {
 
 export function testConnection(data) {
   return request({
-    url: '/api/data-center/test-connection',
+    url: '/data-center/test-connection',
     method: 'post',
     data
   })
@@ -39,21 +39,21 @@ export function testConnection(data) {
 
 export function getConnectionStatus() {
   return request({
-    url: '/api/data-center/connection-status',
+    url: '/data-center/connection-status',
     method: 'get'
   })
 }
 
 export function getTableList() {
   return request({
-    url: '/api/data-center/tables',
+    url: '/data-center/tables',
     method: 'get'
   })
 }
 
 export function createTable(data) {
   return request({
-    url: '/api/data-center/tables',
+    url: '/data-center/tables',
     method: 'post',
     data,
     headers: {
@@ -64,14 +64,14 @@ export function createTable(data) {
 
 export function getTableInfo(tableName) {
   return request({
-    url: `/api/data-center/tables/${tableName}`,
+    url: `/data-center/tables/${tableName}`,
     method: 'get'
   })
 }
 
 export function updateTable(tableName, data) {
   return request({
-    url: `/api/data-center/tables/${tableName}`,
+    url: `/data-center/tables/${tableName}`,
     method: 'put',
     data
   })
@@ -79,14 +79,14 @@ export function updateTable(tableName, data) {
 
 export function deleteTable(tableName) {
   return request({
-    url: `/api/data-center/tables/${tableName}`,
+    url: `/data-center/tables/${tableName}`,
     method: 'delete'
   })
 }
 
 export function getTableData(tableName, page = 1, pageSize = 20, search = '', sortField = '', sortOrder = '') {
   return request({
-    url: `/api/data-center/tables/${tableName}/data`,
+    url: `/data-center/tables/${tableName}/data`,
     method: 'get',
     params: {
       page,
@@ -100,7 +100,7 @@ export function getTableData(tableName, page = 1, pageSize = 20, search = '', so
 
 export function insertData(tableName, data) {
   return request({
-    url: `/api/data-center/tables/${tableName}/data`,
+    url: `/data-center/tables/${tableName}/data`,
     method: 'post',
     data
   })
@@ -108,7 +108,7 @@ export function insertData(tableName, data) {
 
 export function updateData(tableName, id, data) {
   return request({
-    url: `/api/data-center/tables/${tableName}/data/${id}`,
+    url: `/data-center/tables/${tableName}/data/${id}`,
     method: 'put',
     data
   })
@@ -116,14 +116,14 @@ export function updateData(tableName, id, data) {
 
 export function deleteData(tableName, id) {
   return request({
-    url: `/api/data-center/tables/${tableName}/data/${id}`,
+    url: `/data-center/tables/${tableName}/data/${id}`,
     method: 'delete'
   })
 }
 
 export function batchDeleteData(tableName, ids) {
   return request({
-    url: `/api/data-center/tables/${tableName}/data/batch`,
+    url: `/data-center/tables/${tableName}/data/batch`,
     method: 'delete',
     data: ids
   })
@@ -131,7 +131,7 @@ export function batchDeleteData(tableName, ids) {
 
 export function exportTableData(tableName, format = 'csv', search = '') {
   return request({
-    url: `/api/data-center/tables/${tableName}/export`,
+    url: `/data-center/tables/${tableName}/export`,
     method: 'get',
     params: {
       format,
@@ -147,7 +147,7 @@ export function importFile(file, tableName) {
   formData.append('tableName', tableName)
   
   return request({
-    url: '/api/data-center/import/file',
+    url: '/data-center/import/file',
     method: 'post',
     data: formData,
     headers: {
@@ -162,7 +162,7 @@ export function importExcel(file, tableName) {
   formData.append('tableName', tableName)
   
   return request({
-    url: '/api/data-center/import/excel',
+    url: '/data-center/import/excel',
     method: 'post',
     data: formData,
     headers: {
@@ -177,7 +177,7 @@ export function importCsv(file, tableName) {
   formData.append('tableName', tableName)
   
   return request({
-    url: '/api/data-center/import/csv',
+    url: '/data-center/import/csv',
     method: 'post',
     data: formData,
     headers: {
@@ -192,7 +192,7 @@ export function importJson(file, tableName) {
   formData.append('tableName', tableName)
   
   return request({
-    url: '/api/data-center/import/json',
+    url: '/data-center/import/json',
     method: 'post',
     data: formData,
     headers: {
@@ -203,7 +203,7 @@ export function importJson(file, tableName) {
 
 export function getSourceTables(sourceConfig) {
   return request({
-    url: '/api/data-center/import/database/tables',
+    url: '/data-center/import/database/tables',
     method: 'post',
     data: sourceConfig
   })
@@ -211,7 +211,7 @@ export function getSourceTables(sourceConfig) {
 
 export function getSourceTableStructure(sourceConfig, tableName) {
   return request({
-    url: '/api/data-center/import/database/table/structure',
+    url: '/data-center/import/database/table/structure',
     method: 'post',
     data: {
       sourceConfig,
@@ -222,7 +222,7 @@ export function getSourceTableStructure(sourceConfig, tableName) {
 
 export function importTableFromDatabase(sourceConfig, sourceTableName, targetTableName) {
   return request({
-    url: '/api/data-center/import/database/table',
+    url: '/data-center/import/database/table',
     method: 'post',
     data: {
       sourceConfig,
@@ -234,7 +234,7 @@ export function importTableFromDatabase(sourceConfig, sourceTableName, targetTab
 
 export function importMultipleTables(sourceConfig, sourceTableNames) {
   return request({
-    url: '/api/data-center/import/database/tables/batch',
+    url: '/data-center/import/database/tables/batch',
     method: 'post',
     data: {
       sourceConfig,
@@ -245,14 +245,14 @@ export function importMultipleTables(sourceConfig, sourceTableNames) {
 
 export function getTableColumns(tableName) {
   return request({
-    url: `/api/data-center/tables/${tableName}/columns`,
+    url: `/data-center/tables/${tableName}/columns`,
     method: 'get'
   })
 }
 
 export function addColumn(tableName, columnConfig) {
   return request({
-    url: `/api/data-center/tables/${tableName}/columns`,
+    url: `/data-center/tables/${tableName}/columns`,
     method: 'post',
     data: columnConfig
   })
@@ -260,7 +260,7 @@ export function addColumn(tableName, columnConfig) {
 
 export function modifyColumn(tableName, columnName, columnConfig) {
   return request({
-    url: `/api/data-center/tables/${tableName}/columns/${columnName}`,
+    url: `/data-center/tables/${tableName}/columns/${columnName}`,
     method: 'put',
     data: columnConfig
   })
@@ -268,14 +268,14 @@ export function modifyColumn(tableName, columnName, columnConfig) {
 
 export function dropColumn(tableName, columnName) {
   return request({
-    url: `/api/data-center/tables/${tableName}/columns/${columnName}`,
+    url: `/data-center/tables/${tableName}/columns/${columnName}`,
     method: 'delete'
   })
 }
 
 export function generateCrudApi(tableName, options) {
   return request({
-    url: `/api/data-center/tables/${tableName}/generate-api`,
+    url: `/data-center/tables/${tableName}/generate-api`,
     method: 'post',
     data: options
   })
@@ -283,7 +283,7 @@ export function generateCrudApi(tableName, options) {
 
 export function dynamicQuery(queryConfig) {
   return request({
-    url: '/api/data-center/dynamic-query',
+    url: '/data-center/dynamic-query',
     method: 'post',
     data: queryConfig
   })
@@ -291,14 +291,14 @@ export function dynamicQuery(queryConfig) {
 
 export function getTableGroups() {
   return request({
-    url: '/api/data-center/groups/all',
+    url: '/data-center/groups/all',
     method: 'get'
   })
 }
 
 export function getTableGroupList(page = 1, size = 20, keyword = '') {
   return request({
-    url: '/api/data-center/groups/list',
+    url: '/data-center/groups/list',
     method: 'get',
     params: { page, size, keyword }
   })
@@ -306,14 +306,14 @@ export function getTableGroupList(page = 1, size = 20, keyword = '') {
 
 export function getTableGroupTree() {
   return request({
-    url: '/api/data-center/groups/tree',
+    url: '/data-center/groups/tree',
     method: 'get'
   })
 }
 
 export function createTableGroup(data) {
   return request({
-    url: '/api/data-center/groups',
+    url: '/data-center/groups',
     method: 'post',
     data
   })
@@ -321,7 +321,7 @@ export function createTableGroup(data) {
 
 export function updateTableGroup(id, data) {
   return request({
-    url: `/api/data-center/groups/${id}`,
+    url: `/data-center/groups/${id}`,
     method: 'put',
     data
   })
@@ -329,14 +329,14 @@ export function updateTableGroup(id, data) {
 
 export function deleteTableGroup(id) {
   return request({
-    url: `/api/data-center/groups/${id}`,
+    url: `/data-center/groups/${id}`,
     method: 'delete'
   })
 }
 
 export function updateTableGroupForTable(tableName, data) {
   return request({
-    url: `/api/data-center/tables/${tableName}/group`,
+    url: `/data-center/tables/${tableName}/group`,
     method: 'put',
     data
   })
@@ -344,42 +344,42 @@ export function updateTableGroupForTable(tableName, data) {
 
 export function getDataCenterTables(groupId) {
   return request({
-    url: `/api/data-center/table-groups/${groupId}/tables`,
+    url: `/data-center/table-groups/${groupId}/tables`,
     method: 'get'
   })
 }
 
 export function getAllDataCenterTables() {
   return request({
-    url: '/api/data-center/table-groups/all/tables',
+    url: '/data-center/table-groups/all/tables',
     method: 'get'
   })
 }
 
 export function getRecycleBinTables() {
   return request({
-    url: '/api/data-center/recycle-bin',
+    url: '/data-center/recycle-bin',
     method: 'get'
   })
 }
 
 export function softDeleteTable(tableName) {
   return request({
-    url: `/api/data-center/tables/${tableName}/soft-delete`,
+    url: `/data-center/tables/${tableName}/soft-delete`,
     method: 'put'
   })
 }
 
 export function restoreTable(tableName) {
   return request({
-    url: `/api/data-center/tables/${tableName}/restore`,
+    url: `/data-center/tables/${tableName}/restore`,
     method: 'put'
   })
 }
 
 export function permanentDeleteTable(tableName) {
   return request({
-    url: `/api/data-center/tables/${tableName}/permanent`,
+    url: `/data-center/tables/${tableName}/permanent`,
     method: 'delete'
   })
 }

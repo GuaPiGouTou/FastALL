@@ -5,7 +5,7 @@ import request from '@/utils/request'
  */
 export function getExperimentTaskList(params) {
   return request({
-    url: '/api/experimentTask/list',
+    url: '/experimentTask/list',
     method: 'get',
     params
   })
@@ -16,7 +16,7 @@ export function getExperimentTaskList(params) {
  */
 export function addExperimentTask(data) {
   return request({
-    url: '/api/experimentTask/add',
+    url: '/experimentTask/add',
     method: 'post',
     data
   })
@@ -27,7 +27,7 @@ export function addExperimentTask(data) {
  */
 export function updateExperimentTask(data) {
   return request({
-    url: '/api/experimentTask/update',
+    url: '/experimentTask/update',
     method: 'put',
     data
   })
@@ -38,7 +38,7 @@ export function updateExperimentTask(data) {
  */
 export function deleteExperimentTask(id) {
   return request({
-    url: `/api/experimentTask/delete/${id}`,
+    url: `/experimentTask/delete/${id}`,
     method: 'delete'
   })
 }

@@ -388,7 +388,7 @@
                 <el-upload 
                   class="upload-box-wrapper" 
                   drag
-                  action="/api/file/upload"
+                  action="/file/upload"
                   name="file"
                   :show-file-list="false" 
                   :on-success="(res) => handleUploadSuccess(res, col.prop)" 
