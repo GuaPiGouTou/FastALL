@@ -59,6 +59,7 @@ public class ApiParameter {
 
     private String fieldTransform;
 
+    @TableField("is_sensitive")
     private Integer sensitive;
 
     private String mockRule;
