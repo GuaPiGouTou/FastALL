@@ -63,7 +63,9 @@ public class SysFileChunkServiceImpl extends ServiceImpl<SysFileChunkMapper, Sys
         String chunkPath = chunkDir + File.separator + chunk.getChunkNumber() + ".part";
         file.transferTo(new File(chunkPath));
 
-        chunk.setRelativePath(chunkPath);
+        // 使用相对路径，避免绝对路径导致的问题
+        String relativePath = "chunks" + File.separator + chunk.getIdentifier() + File.separator + chunk.getChunkNumber() + ".part";
+        chunk.setRelativePath(relativePath);
         this.save(chunk);
 
         redisTemplate.opsForSet().add(CHUNK_KEY_PREFIX + chunk.getIdentifier(), chunk.getChunkNumber().toString());
@@ -89,7 +91,9 @@ public class SysFileChunkServiceImpl extends ServiceImpl<SysFileChunkMapper, Sys
         // 1. 物理合并分片
         try (FileOutputStream fos = new FileOutputStream(fullFile, true)) {
             for (SysFileChunk chunk : chunkList) {
-                File part = new File(chunk.getRelativePath());
+                // 使用localPath加上相对路径构建完整路径
+                String partPath = localPath + chunk.getRelativePath();
+                File part = new File(partPath);
                 if (part.exists()) {
                     Files.copy(part.toPath(), fos);
                 }

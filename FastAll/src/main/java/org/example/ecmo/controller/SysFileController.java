@@ -57,12 +57,12 @@ public class SysFileController {
         System.out.println("========================");
         
         if (file == null || file.isEmpty()) {
-            return new JsonResult<>(500, null, "文件不能为空");
+            return JsonResult.error("文件不能为空");
         }
 
         String url = sysFileInfoService.upload(file, bizType, bizId, fileType);
 
-        return new JsonResult<>(200, url, "上传成功");
+        return JsonResult.success(url, "上传成功");
     }
 
     @AuditLog(title = "获取业务文件列表", businessType = 0)
@@ -71,7 +71,7 @@ public class SysFileController {
             @RequestParam String bizType,
             @RequestParam Long bizId) {
         List<SysFileInfo> files = sysFileInfoService.getFilesByBiz(bizType, bizId);
-        return new JsonResult<>(200, files, "获取成功");
+        return JsonResult.success(files, "获取成功");
     }
 
     @AuditLog(title = "文件列表", businessType = 0)
@@ -98,7 +98,7 @@ public class SysFileController {
         wrapper.le(endTime != null, SysFileInfo::getCreatedAt, endTime);
         
         wrapper.orderByDesc(SysFileInfo::getCreatedAt);
-        return new JsonResult<>(200, sysFileInfoService.page(page, wrapper), "查询成功");
+        return JsonResult.success(sysFileInfoService.page(page, wrapper), "查询成功");
     }
 
     /**
@@ -108,7 +108,7 @@ public class SysFileController {
     @DeleteMapping("/delete/{id}")
     public JsonResult<String> delete(@PathVariable Long id) {
         sysFileInfoService.deleteFile(id);
-        return new JsonResult<>(200, null, "删除成功");
+        return JsonResult.success("删除成功");
     }
 
     /**
@@ -118,7 +118,7 @@ public class SysFileController {
     @PutMapping("/update")
     public JsonResult<String> update(@RequestBody SysFileInfo info) {
         sysFileInfoService.updateMetadata(info);
-        return new JsonResult<>(200, null, "更新成功");
+        return JsonResult.success("更新成功");
     }
 
     /**

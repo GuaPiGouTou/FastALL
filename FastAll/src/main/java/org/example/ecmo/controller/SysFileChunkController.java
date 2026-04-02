@@ -27,7 +27,7 @@ public class SysFileChunkController {
     @GetMapping
     public JsonResult<Set<Integer>> check(@RequestParam("identifier") String identifier) {
         Set<Integer> chunks = chunkService.checkChunk(identifier);
-        return new JsonResult<>(200, chunks, "查询成功");
+        return JsonResult.success(chunks, "查询成功");
     }
 
     /**
@@ -37,7 +37,7 @@ public class SysFileChunkController {
     @PostMapping
     public JsonResult<String> upload(SysFileChunk chunk, @RequestParam("file") MultipartFile file) throws IOException {
         chunkService.uploadChunk(chunk, file);
-        return new JsonResult<>(200, "success", "分片处理成功");
+        return JsonResult.success("success", "分片处理成功");
     }
     /**
      * 合并分片
@@ -50,7 +50,7 @@ public class SysFileChunkController {
     public JsonResult<String> merge(@RequestParam("identifier") String identifier,
                                     @RequestParam("fileName") String fileName) throws IOException {
         String url = chunkService.mergeChunk(identifier, fileName);
-        return new JsonResult<>(200, url, "文件合并并入库成功");
+        return JsonResult.success(url, "文件合并并入库成功");
     }
 
 }
