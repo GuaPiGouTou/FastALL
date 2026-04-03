@@ -2,8 +2,10 @@ package org.example.ecmo.service.impl;
 
 import org.example.ecmo.service.DataCenterService;
 import org.example.ecmo.factory.DatabaseConnectionFactory;
+import org.example.ecmo.entity.ApiGroup;
 import org.example.ecmo.entity.DataCenterTable;
 import org.example.ecmo.mapper.DataCenterTableMapper;
+import org.example.ecmo.service.ApiGroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -34,6 +36,9 @@ public class DataCenterServiceImpl implements DataCenterService {
     
     @Autowired
     private DataCenterTableMapper dataCenterTableMapper;
+
+    @Autowired
+    private ApiGroupService apiGroupService;
 
     @Override
     public Map<String, Object> getOverview() {
@@ -181,6 +186,11 @@ public class DataCenterServiceImpl implements DataCenterService {
         List<Map<String, Object>> tables = new ArrayList<>();
         
         try {
+            Map<Long, String> apiGroupNames = new HashMap<>();
+            for (ApiGroup g : apiGroupService.findAllActive()) {
+                apiGroupNames.put(g.getId(), g.getGroupName());
+            }
+
             QueryWrapper<DataCenterTable> queryWrapper = new QueryWrapper<>();
             queryWrapper.eq("status", 1).orderByDesc("create_time");
             List<DataCenterTable> tableRecords = dataCenterTableMapper.selectList(queryWrapper);
@@ -190,7 +200,11 @@ public class DataCenterServiceImpl implements DataCenterService {
                 table.put("tableName", record.getTableName());
                 table.put("description", record.getDescription() != null ? record.getDescription() : record.getTableName());
                 table.put("groupId", record.getGroupId());
-                table.put("groupName", record.getGroupName());
+                String resolvedName = record.getGroupName();
+                if (record.getGroupId() != null) {
+                    resolvedName = apiGroupNames.getOrDefault(record.getGroupId(), resolvedName);
+                }
+                table.put("groupName", resolvedName);
                 table.put("sourceType", record.getSourceType());
                 table.put("createTime", record.getCreateTime());
                 
@@ -239,8 +253,15 @@ public class DataCenterServiceImpl implements DataCenterService {
             DataCenterTable record = new DataCenterTable();
             record.setTableName(tableName);
             record.setDescription(description);
-            record.setGroupId(tableConfig.get("groupId") != null ? Long.valueOf(tableConfig.get("groupId").toString()) : null);
-            record.setGroupName((String) tableConfig.get("groupName"));
+            Long gid = tableConfig.get("groupId") != null ? Long.valueOf(tableConfig.get("groupId").toString()) : null;
+            record.setGroupId(gid);
+            String cfgName = (String) tableConfig.get("groupName");
+            if (gid != null) {
+                ApiGroup ag = apiGroupService.getById(gid);
+                record.setGroupName(ag != null ? ag.getGroupName() : cfgName);
+            } else {
+                record.setGroupName(cfgName);
+            }
             record.setSourceType("create");
             record.setRecordCount(0L);
             record.setStatus(1);
@@ -1341,6 +1362,11 @@ public class DataCenterServiceImpl implements DataCenterService {
         List<Map<String, Object>> tables = new ArrayList<>();
         
         try {
+            Map<Long, String> apiGroupNames = new HashMap<>();
+            for (ApiGroup g : apiGroupService.findAllActive()) {
+                apiGroupNames.put(g.getId(), g.getGroupName());
+            }
+
             QueryWrapper<DataCenterTable> queryWrapper = new QueryWrapper<>();
             queryWrapper.eq("status", 1);
             if (groupId != null) {
@@ -1354,7 +1380,11 @@ public class DataCenterServiceImpl implements DataCenterService {
                 table.put("tableName", record.getTableName());
                 table.put("description", record.getDescription() != null ? record.getDescription() : record.getTableName());
                 table.put("groupId", record.getGroupId());
-                table.put("groupName", record.getGroupName());
+                String gn = record.getGroupName();
+                if (record.getGroupId() != null) {
+                    gn = apiGroupNames.getOrDefault(record.getGroupId(), gn);
+                }
+                table.put("groupName", gn);
                 table.put("sourceType", record.getSourceType());
                 table.put("createTime", record.getCreateTime());
                 table.put("recordCount", record.getRecordCount() != null ? record.getRecordCount() : 0L);
@@ -1376,9 +1406,14 @@ public class DataCenterServiceImpl implements DataCenterService {
             
             if (tableRecord != null) {
                 tableRecord.setGroupId(groupId);
-                tableRecord.setGroupName(groupName);
+                if (groupId != null) {
+                    ApiGroup ag = apiGroupService.getById(groupId);
+                    tableRecord.setGroupName(ag != null ? ag.getGroupName() : groupName);
+                } else {
+                    tableRecord.setGroupName(null);
+                }
                 dataCenterTableMapper.updateById(tableRecord);
-                log.info("更新表分组成功: {} -> {}", tableName, groupName);
+                log.info("更新表分组成功: {} -> {}", tableName, tableRecord.getGroupName());
                 return true;
             } else {
                 log.warn("未找到表记录: {}", tableName);
@@ -1478,5 +1513,14 @@ public class DataCenterServiceImpl implements DataCenterService {
             log.error("永久删除表失败: {}", tableName, e);
             return false;
         }
+    }
+
+    @Override
+    public long countByGroupId(Long groupId) {
+        if (groupId == null) {
+            return 0;
+        }
+        return dataCenterTableMapper.selectCount(
+                new QueryWrapper<DataCenterTable>().eq("group_id", groupId).eq("status", 1));
     }
 }

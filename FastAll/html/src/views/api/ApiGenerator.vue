@@ -37,11 +37,11 @@
             </div>
           </div>
           <el-form :model="wizardForm" label-width="120px" class="api-form">
-            <el-form-item label="数据分组" required>
+            <el-form-item label="API 分组（筛选表）" required>
               <el-select 
                 v-model="wizardForm.dataCenterGroupId" 
                 style="width: 100%" 
-                placeholder="请选择数据中心分组" 
+                placeholder="与 API 管理中的分组一致" 
                 @change="onDataCenterGroupChange"
               >
                 <el-option label="全部分组" :value="null" />

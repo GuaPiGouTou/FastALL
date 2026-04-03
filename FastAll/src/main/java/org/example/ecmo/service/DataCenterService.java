@@ -66,4 +66,7 @@ public interface DataCenterService {
     boolean restoreTable(String tableName);
     
     boolean permanentDeleteTable(String tableName);
+
+    /** 正常状态且归属某 API 分组的数据表数量（用于删除分组前校验） */
+    long countByGroupId(Long groupId);
 }

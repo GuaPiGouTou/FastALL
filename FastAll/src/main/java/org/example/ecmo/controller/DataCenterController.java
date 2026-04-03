@@ -3,7 +3,6 @@ package org.example.ecmo.controller;
 import org.example.ecmo.annotation.AuditLog;
 import org.example.ecmo.config.JsonResult;
 import org.example.ecmo.service.DataCenterService;
-import org.example.ecmo.service.DataTableGroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -24,9 +23,6 @@ public class DataCenterController {
 
     @Autowired
     private DataCenterService dataCenterService;
-    
-    @Autowired
-    private DataTableGroupService dataTableGroupService;
 
     @AuditLog(title = "数据中心概览", businessType = 0)
     @GetMapping("/overview")

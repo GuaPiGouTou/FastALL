@@ -30,6 +30,9 @@ public class ApiManagerV2Controller {
     @Autowired
     private ApiDatasourceService apiDatasourceService;
 
+    @Autowired
+    private DataCenterService dataCenterService;
+
     @AuditLog(title = "API管理概览", businessType = 0)
     @GetMapping("/overview")
     public JsonResult getOverview() {
@@ -224,6 +227,10 @@ public class ApiManagerV2Controller {
         long apiCount = apiDefinitionService.countByGroupId(id);
         if (apiCount > 0) {
             return JsonResult.error("该分组下有 " + apiCount + " 个API，请先移动或删除这些API");
+        }
+        long dataTableCount = dataCenterService.countByGroupId(id);
+        if (dataTableCount > 0) {
+            return JsonResult.error("该分组下仍有 " + dataTableCount + " 张数据中心表，请先在数据中心移动或取消分组");
         }
         apiGroupService.removeById(id);
         return JsonResult.success("删除成功");

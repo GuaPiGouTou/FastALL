@@ -65,6 +65,12 @@
         </div>
 
         <div class="table-toolbar">
+          <el-select v-model="tableGroupFilter" placeholder="API 分组筛选" clearable style="width: 200px">
+            <el-option label="全部分组" :value="null" />
+            <el-option v-for="g in flattenApiGroups" :key="g.id" :label="g.groupName" :value="g.id">
+              <span :style="{ paddingLeft: (g.level || 0) * 16 + 'px' }">{{ g.groupName }}</span>
+            </el-option>
+          </el-select>
           <el-input v-model="tableSearchText" placeholder="搜索表名..." :prefix-icon="Search" clearable style="width: 300px" />
           <div class="view-toggle">
             <el-tooltip content="网格视图">
@@ -93,6 +99,7 @@
                     <el-dropdown-menu>
                       <el-dropdown-item command="edit"><el-icon><EditPen /></el-icon> 编辑结构</el-dropdown-item>
                       <el-dropdown-item command="api"><el-icon><Connection /></el-icon> 生成API</el-dropdown-item>
+                      <el-dropdown-item command="group"><el-icon><FolderOpened /></el-icon> 设置 API 分组</el-dropdown-item>
                       <el-dropdown-item command="delete" style="color:#f56c6c" divided><el-icon><Delete /></el-icon> 移入回收站</el-dropdown-item>
                     </el-dropdown-menu>
                   </template>
@@ -102,6 +109,9 @@
             <div class="m-card-body">
               <div class="m-name">{{ table.tableName }}</div>
               <div class="m-meta">{{ table.description || '暂无描述' }}</div>
+              <div v-if="table.groupName" class="m-group-tag">
+                <el-tag size="small" type="info" effect="plain">{{ table.groupName }}</el-tag>
+              </div>
             </div>
             <div class="m-card-footer">
               <span><el-icon style="vertical-align: -1px"><DataLine /></el-icon> {{ table.recordCount || 0 }}</span>
@@ -112,7 +122,7 @@
 
         <div v-else class="modules-list">
           <div class="list-header">
-            <div class="col-name">表名</div><div class="col-desc">描述</div><div class="col-recs">记录数</div><div class="col-cols">字段数</div><div class="col-act"></div>
+            <div class="col-name">表名</div><div class="col-desc">描述</div><div class="col-group">分组</div><div class="col-recs">记录数</div><div class="col-cols">字段数</div><div class="col-act"></div>
           </div>
           <div v-for="table in filteredTableList" :key="table.tableName" class="list-item" @click="openTableData(table)">
             <div class="col-name">
@@ -120,6 +130,7 @@
               <span>{{ table.tableName }}</span>
             </div>
             <div class="col-desc">{{ table.description || '-' }}</div>
+            <div class="col-group"><span v-if="table.groupName" class="list-group-pill">{{ table.groupName }}</span><span v-else class="text-muted">-</span></div>
             <div class="col-recs">{{ table.recordCount || 0 }}</div>
             <div class="col-cols">{{ table.columnCount || 0 }}</div>
             <div class="col-act" @click.stop>
@@ -128,6 +139,8 @@
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item command="edit">编辑</el-dropdown-item>
+                    <el-dropdown-item command="group">设置 API 分组</el-dropdown-item>
+                    <el-dropdown-item command="api">生成API</el-dropdown-item>
                     <el-dropdown-item command="delete" style="color:#f56c6c">删除</el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
@@ -339,6 +352,13 @@
           </el-form-item>
           <el-form-item label="描述">
             <el-input v-model="createTableForm.description" placeholder="例如：员工信息表" />
+          </el-form-item>
+          <el-form-item label="API 分组（与 API 管理 / 生成器一致）">
+            <el-select v-model="createTableForm.groupId" clearable placeholder="不选则为未分组" style="width: 100%">
+              <el-option v-for="g in flattenApiGroups" :key="g.id" :label="g.groupName" :value="g.id">
+                <span :style="{ paddingLeft: (g.level || 0) * 16 + 'px' }">{{ g.groupName }}</span>
+              </el-option>
+            </el-select>
           </el-form-item>
           <el-form-item label="字段设计">
             <div class="field-designer">
@@ -651,6 +671,19 @@
         <el-button type="danger" @click="handleEmptyRecycleBin" :disabled="recycleBinTables.length === 0">清空回收站</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="assignGroupDialogVisible" title="设置 API 分组" width="420px" destroy-on-close>
+      <div v-if="assignGroupTable" class="assign-group-hint">表：<strong>{{ assignGroupTable.tableName }}</strong></div>
+      <el-select v-model="assignGroupId" clearable placeholder="未分组" style="width: 100%; margin-top: 12px">
+        <el-option v-for="g in flattenApiGroups" :key="g.id" :label="g.groupName" :value="g.id">
+          <span :style="{ paddingLeft: (g.level || 0) * 16 + 'px' }">{{ g.groupName }}</span>
+        </el-option>
+      </el-select>
+      <template #footer>
+        <el-button @click="assignGroupDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="savingAssignGroup" @click="confirmAssignGroup">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -659,7 +692,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   DataAnalysis, DataLine, Grid, Plus, Delete, Search, Refresh, Download, Document, Upload,
-  DocumentAdd, Tickets, Menu, MoreFilled, EditPen, Connection, Coin, List, Filter, Sort,
+  DocumentAdd, Tickets, Menu, MoreFilled, EditPen, Connection, Coin, List, Filter, Sort, FolderOpened,
   Operation, ArrowDown, Close, CircleCloseFilled, UploadFilled, InfoFilled, Star, Money,
   Paperclip, Calendar, Select, Link
 } from '@element-plus/icons-vue'
@@ -668,7 +701,8 @@ import {
   updateTable, deleteTable, getTableData, insertData, updateData, deleteData, batchDeleteData,
   exportTableData, importExcel, importCsv, importJson, getSourceTables, importTableFromDatabase,
   getTableColumns, addColumn, modifyColumn, dropColumn, generateCrudApi,
-  getRecycleBinTables, softDeleteTable, restoreTable, permanentDeleteTable
+  getRecycleBinTables, softDeleteTable, restoreTable, permanentDeleteTable,
+  getTableGroupTree, updateTableGroupForTable
 } from '@/api/dataCenter'
 
 const UPLOAD_ACTION_URL = '/api/file/upload'
@@ -683,11 +717,41 @@ const viewMode = ref('grid')
 const loading = ref(false)
 const tableSearchText = ref('')
 const tableList = ref([])
+const tableGroupFilter = ref(null)
+const flattenApiGroups = ref([])
+const assignGroupDialogVisible = ref(false)
+const assignGroupTable = ref(null)
+const assignGroupId = ref(null)
+const savingAssignGroup = ref(false)
+
+const flattenGroupTree = (nodes, level = 0) => {
+  const out = []
+  for (const n of nodes || []) {
+    out.push({ id: n.id, groupName: n.groupName, level })
+    if (n.children && n.children.length) out.push(...flattenGroupTree(n.children, level + 1))
+  }
+  return out
+}
+
+const loadApiGroupTree = async () => {
+  try {
+    const res = await getTableGroupTree()
+    if (res.code === 200 || res.code === 0) {
+      flattenApiGroups.value = flattenGroupTree(res.data || [])
+    }
+  } catch (e) {
+    console.error('加载 API 分组失败:', e)
+  }
+}
 
 const filteredTableList = computed(() => {
-  if (!tableSearchText.value) return tableList.value
+  let list = tableList.value
+  if (tableGroupFilter.value != null && tableGroupFilter.value !== '') {
+    list = list.filter(t => t.groupId === tableGroupFilter.value)
+  }
+  if (!tableSearchText.value) return list
   const search = tableSearchText.value.toLowerCase()
-  return tableList.value.filter(t => t.tableName.toLowerCase().includes(search) || (t.description && t.description.toLowerCase().includes(search)))
+  return list.filter(t => t.tableName.toLowerCase().includes(search) || (t.description && t.description.toLowerCase().includes(search)))
 })
 
 const createTableDrawerVisible = ref(false)
@@ -695,6 +759,7 @@ const createTableLoading = ref(false)
 const createTableForm = reactive({
   tableName: '',
   description: '',
+  groupId: null,
   fields: [{ label: '', name: 'id', uiType: 'Input', options: '' }]
 })
 
@@ -917,12 +982,14 @@ const loadTableList = async () => {
 }
 
 const refreshData = async () => {
+  await loadApiGroupTree()
   await loadTableList()
 }
 
 const openCreateTableDialog = () => {
   createTableForm.tableName = ''
   createTableForm.description = ''
+  createTableForm.groupId = null
   createTableForm.fields = [
     { label: 'ID', name: 'id', uiType: 'Input', options: '' },
     { label: '', name: '', uiType: 'Input', options: '' }
@@ -944,6 +1011,7 @@ const handleCreateTable = async () => {
     const tableConfig = {
       tableName: 'tb_' + createTableForm.tableName,
       description: createTableForm.description,
+      groupId: createTableForm.groupId ?? undefined,
       columns: validFields.map(f => {
         let dataType = 'VARCHAR(255)'
         if (f.uiType === 'InputNumber') dataType = 'INT'
@@ -982,10 +1050,39 @@ const handleCreateTable = async () => {
   finally { createTableLoading.value = false }
 }
 
+const openAssignGroupDialog = (table) => {
+  assignGroupTable.value = table
+  assignGroupId.value = table.groupId ?? null
+  assignGroupDialogVisible.value = true
+}
+
+const confirmAssignGroup = async () => {
+  if (!assignGroupTable.value) return
+  savingAssignGroup.value = true
+  try {
+    const res = await updateTableGroupForTable(assignGroupTable.value.tableName, {
+      groupId: assignGroupId.value,
+      groupName: null
+    })
+    if (res.code === 200 || res.code === 0) {
+      ElMessage.success('分组已更新')
+      assignGroupDialogVisible.value = false
+      await loadTableList()
+    }
+  } catch (e) {
+    console.error(e)
+    ElMessage.error('保存失败')
+  } finally {
+    savingAssignGroup.value = false
+  }
+}
+
 const handleTableCommand = async (cmd, table) => {
   if (cmd === 'edit') {
     currentView.value = 'data'
     await openTableData(table)
+  } else if (cmd === 'group') {
+    openAssignGroupDialog(table)
   } else if (cmd === 'delete') {
     try {
       await ElMessageBox.confirm(`确定将 "${table.tableName}" 移入回收站吗？`, '提示', { type: 'warning', confirmButtonText: '移入回收站' })
@@ -1423,7 +1520,7 @@ onMounted(() => refreshData())
 .c-title { font-weight: bold; font-size: 14px; color: #303133; }
 .c-desc { font-size: 12px; color: #909399; margin-top: 2px; }
 
-.table-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.table-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
 .view-toggle { display: flex; background: #f2f6fc; padding: 3px; border-radius: 6px; }
 .toggle-btn { padding: 5px 10px; cursor: pointer; color: #909399; display: flex; transition: all 0.2s; border-radius: 4px; }
 .toggle-btn:hover { color: #303133; }
@@ -1443,12 +1540,17 @@ onMounted(() => refreshData())
 .m-card-footer { display: flex; justify-content: space-between; font-size: 12px; color: #C0C4CC; border-top: 1px solid #f9f9f9; padding-top: 10px; }
 
 .modules-list { background: #fff; border: 1px solid #ebeef5; border-radius: 8px; font-size: 14px; }
-.list-header { background: #fafafa; color: #909399; font-weight: bold; font-size: 13px; border-bottom: 1px solid #ebeef5; padding: 12px 20px; display: grid; grid-template-columns: 2fr 1.5fr 1fr 1fr 50px; }
-.list-item { padding: 12px 20px; border-bottom: 1px solid #f9f9f9; display: grid; grid-template-columns: 2fr 1.5fr 1fr 1fr 50px; align-items: center; cursor: pointer; transition: background 0.2s; }
+.list-header { background: #fafafa; color: #909399; font-weight: bold; font-size: 13px; border-bottom: 1px solid #ebeef5; padding: 12px 20px; display: grid; grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr 50px; }
+.list-item { padding: 12px 20px; border-bottom: 1px solid #f9f9f9; display: grid; grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr 50px; align-items: center; cursor: pointer; transition: background 0.2s; }
 .list-item:hover { background: #f5f7fa; }
 .list-icon { width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 14px; }
 .col-name { display: flex; align-items: center; font-weight: 500; }
 .col-desc { color: #606266; }
+.col-group { font-size: 13px; color: #606266; min-width: 0; }
+.list-group-pill { font-size: 12px; color: #606266; background: #f4f4f5; padding: 2px 8px; border-radius: 4px; display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.text-muted { color: #c0c4cc; }
+.m-group-tag { margin-top: 8px; }
+.assign-group-hint { font-size: 14px; color: #606266; margin-bottom: 4px; }
 
 .grid-toolbar { height: 44px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; background: #fff; }
 .tool-group { display: flex; align-items: center; gap: 8px; }
