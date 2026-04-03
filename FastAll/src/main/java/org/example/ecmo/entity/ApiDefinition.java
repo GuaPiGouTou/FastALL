@@ -73,21 +73,17 @@ public class ApiDefinition {
 
     private String status;
 
-    // 兼容：部分历史库可能尚未补齐 operation_type 等扩展字段
-    // exist=false 会让 MyBatis-Plus 在 insert/select 时跳过该字段，避免 Unknown column 导致创建失败
-    @TableField(exist = false)
     private String operationType;
     
-    @TableField(exist = false)
     private String tenantAppId;
     
-    @TableField(exist = false, typeHandler = com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler.class)
+    @TableField(typeHandler = com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler.class)
     private Object returnFields;
     
-    @TableField(exist = false, typeHandler = com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler.class)
+    @TableField(typeHandler = com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler.class)
     private Object requestFields;
     
-    @TableField(exist = false, typeHandler = com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler.class)
+    @TableField(typeHandler = com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler.class)
     private Object conditionFields;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")

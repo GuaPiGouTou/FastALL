@@ -240,6 +240,14 @@ public class ApiDefinitionServiceImpl extends ServiceImpl<ApiDefinitionMapper, A
             }
         }
         
+        if (api.getEnvironment() == null) {
+            api.setEnvironment("dev");
+        }
+        
+        if ("crud".equals(api.getExecMode())) {
+            api.setExecMode("AUTO");
+        }
+        
         validateApi(api);
         save(api);
         
@@ -272,6 +280,13 @@ public class ApiDefinitionServiceImpl extends ServiceImpl<ApiDefinitionMapper, A
             }
         } else {
             api.setGroupName(null);
+        }
+        
+        if (api.getEnvironment() == null) {
+            api.setEnvironment("dev");
+        }
+        if ("crud".equals(api.getExecMode())) {
+            api.setExecMode("AUTO");
         }
         
         api.setUpdateTime(LocalDateTime.now());

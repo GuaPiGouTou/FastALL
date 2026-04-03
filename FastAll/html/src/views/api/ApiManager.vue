@@ -478,8 +478,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, reactive } from 'vue'
+import { ref, onMounted, computed, reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   Plus, Delete, Close, FolderOpened, Folder, Document, Search, Edit, 
@@ -489,6 +490,7 @@ import {
 import * as api from '@/api/apiManagerV2'
 
 const router = useRouter()
+const route = useRoute()
 
 const stats = reactive({
   total: 0,
@@ -632,13 +634,19 @@ const handleGroupClick = (data) => {
 }
 
 const loadApiList = async () => {
-  const res = await api.getApiList({
+  // 关键点：selectedGroupId 为空时不要传 groupId=null
+  // 否则 axios 可能把它序列化成字符串 "null"，后端 Long 绑定会出错或过滤结果异常。
+  const params = {
     page: currentPage.value,
     size: pageSize.value,
     keyword: searchKeyword.value,
-    status: filterStatus.value,
-    groupId: selectedGroupId.value
-  })
+    status: filterStatus.value
+  }
+  if (selectedGroupId.value !== null) {
+    params.groupId = selectedGroupId.value
+  }
+
+  const res = await api.getApiList(params)
   if (res.code === 200 || res.code === 0) {
     apiList.value = res.data.list || []
     total.value = res.data.total || 0
@@ -978,6 +986,14 @@ onMounted(() => {
   loadGroups()
   loadApiList()
   loadDataCenterGroups()
+})
+
+// 如果是从 ApiGenerator 创建成功后带 reload 参数进来，则强制重载列表
+watch(() => route.query.reload, () => {
+  // 列表/统计都重新拉取，避免状态缓存导致的“刷新前有、刷新后没”
+  loadStats()
+  loadGroups()
+  loadApiList()
 })
 </script>
 

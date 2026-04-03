@@ -9,6 +9,13 @@ const service = axios.create({
 // 请求拦截器
 service.interceptors.request.use(
   config => {
+    // 兼容：线上环境 VITE_APP_BASE_API='/api' 时，部分接口 url 写成了 '/api/xxx'
+    // axios 会拼成 '/api/api/xxx' 导致 404，这里做一次前缀去重
+    const baseApi = import.meta.env.VITE_APP_BASE_API
+    if (baseApi === '/api' && typeof config.url === 'string' && config.url.startsWith('/api/')) {
+      config.url = config.url.replace(/^\/api\/?/, '/')
+    }
+
     const token = localStorage.getItem('token')
     const tokenName = localStorage.getItem('tokenName') || 'satoken'
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')

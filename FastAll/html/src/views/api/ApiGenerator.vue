@@ -759,7 +759,8 @@ const handleCreate = async (skipRedirect = false) => {
     if (res.code === 200 || res.code === 0) {
       ElMessage.success('创建成功')
       if (!skipRedirect) {
-        router.push('/tool/api-manager')
+        // 强制刷新 ApiManager 列表，避免“未刷新时看得到、刷新后没了”的假象
+        router.push(`/tool/api-manager?reload=${Date.now()}`)
       }
       return true
     } else {
@@ -830,7 +831,7 @@ const resetForm = () => {
 }
 
 const goToManager = () => {
-  router.push('/tool/api-manager')
+  router.push(`/tool/api-manager?reload=${Date.now()}`)
 }
 
 onMounted(() => {
