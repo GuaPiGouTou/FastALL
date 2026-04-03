@@ -14,6 +14,7 @@ public class SaTokenConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new SaInterceptor(handler -> {
             SaRouter.match("/api/**")
+                .excludePathPatterns("/captcha/get", "/captcha/check")
                 .notMatch("/api/auth/**")
                 .notMatch("/api/file/upload")
                 .notMatch("/api/file/upload/**")
