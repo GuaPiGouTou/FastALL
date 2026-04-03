@@ -9,6 +9,14 @@ DROP TABLE IF EXISTS `api_parameter`;
 DROP TABLE IF EXISTS `api_version`;
 DROP TABLE IF EXISTS `api_definition`;
 
+-- 如果表已存在，添加缺失的列
+ALTER TABLE `api_definition` 
+ADD COLUMN IF NOT EXISTS `operation_type` VARCHAR(20) COMMENT '操作类型: list/detail/add/update/delete',
+ADD COLUMN IF NOT EXISTS `tenant_app_id` VARCHAR(100) COMMENT '租户应用ID',
+ADD COLUMN IF NOT EXISTS `return_fields` JSON COMMENT '返回字段配置JSON',
+ADD COLUMN IF NOT EXISTS `request_fields` JSON COMMENT '请求字段配置JSON',
+ADD COLUMN IF NOT EXISTS `condition_fields` JSON COMMENT '查询条件字段配置JSON';
+
 -- =====================================================
 -- 1. API定义表 (增强版)
 -- =====================================================

@@ -22,10 +22,10 @@ public class CosFileStorageServiceImpl implements FileStorageService {
 
     private COSClient cosClient;
 
-    @Value("${TENCENT_CLOUD_SECRET_ID}")
+    @Value("${TENCENT_CLOUD_SECRET_ID:fake-id}")
     private String secretId;
 
-    @Value("${TENCENT_CLOUD_SECRET_KEY}")
+    @Value("${TENCENT_CLOUD_SECRET_KEY:fake-key}")
     private String secretKey;
 
     @Value("${file.cos.bucket}")
