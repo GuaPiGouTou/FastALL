@@ -44,7 +44,6 @@
                 placeholder="与 API 管理中的分组一致" 
                 @change="onDataCenterGroupChange"
               >
-                <el-option label="全部分组" :value="null" />
                 <el-option v-for="g in flattenDataCenterGroups" :key="g.id" :label="g.groupName" :value="g.id">
                   <span :style="{ paddingLeft: (g.level || 0) * 20 + 'px' }">{{ g.groupName }}</span>
                 </el-option>
@@ -85,6 +84,17 @@
               </div>
             </el-form-item>
           </el-form>
+          <div class="step-footer">
+            <el-button
+              type="primary"
+              size="large"
+              :disabled="!canNextFromStep0"
+              @click="nextStep"
+            >
+              <span>下一步</span>
+              <el-icon style="margin-left: 6px"><ArrowRight /></el-icon>
+            </el-button>
+          </div>
         </div>
 
         <div v-show="currentStep === 1" class="step-content">
@@ -182,6 +192,16 @@
               </el-select>
             </el-form-item>
           </el-form>
+          <div class="step-footer">
+            <el-button @click="prevStep" size="large">
+              <el-icon><ArrowLeft /></el-icon>
+              上一步
+            </el-button>
+            <el-button type="primary" size="large" @click="nextStep">
+              下一步
+              <el-icon style="margin-left: 6px"><ArrowRight /></el-icon>
+            </el-button>
+          </div>
         </div>
 
         <div v-show="currentStep === 2" class="step-content">
@@ -463,6 +483,19 @@ const filteredRequestColumns = computed(() => {
   return tableColumns.value.filter(col => col.key !== 'PRI')
 })
 
+const getPrimaryKeyName = () => {
+  const pk = tableColumns.value.find(c => c.key === 'PRI')
+  return pk ? (pk.columnName || pk.fieldName) : null
+}
+
+// 步骤控制：第 1 步（选择数据表）必须先选分组 + 选表
+const canNextFromStep0 = computed(() => {
+  return wizardForm.value.dataCenterGroupId != null &&
+    wizardForm.value.tableName &&
+    tableColumns.value &&
+    tableColumns.value.length > 0
+})
+
 // 计算属性：是否可以创建API
 const canCreate = computed(() => {
   // 基本验证
@@ -518,6 +551,23 @@ const onOperationTypeChange = (operationType) => {
   
   // 自动生成API名称
   generateApiName()
+
+  // 根据操作类型同步字段选择（避免切换后仍使用旧选择）
+  if (!tableColumns.value || tableColumns.value.length === 0) return
+
+  if (operationType === 'list') {
+    wizardForm.value.requestFields = []
+    wizardForm.value.conditionFields = tableColumns.value.map(col => col.columnName || col.fieldName)
+  } else if (operationType === 'add') {
+    wizardForm.value.conditionFields = []
+    selectAllRequestFields()
+  } else if (operationType === 'update') {
+    wizardForm.value.conditionFields = []
+    selectAllRequestFields()
+  } else {
+    wizardForm.value.requestFields = []
+    wizardForm.value.conditionFields = []
+  }
 }
 
 // 生成API名称
@@ -548,11 +598,23 @@ const clearAllReturnFields = () => {
 }
 
 const selectAllRequestFields = () => {
-  wizardForm.value.requestFields = filteredRequestColumns.value.map(col => col.columnName || col.fieldName)
+  const pkName = getPrimaryKeyName()
+  const nonPk = filteredRequestColumns.value.map(col => col.columnName || col.fieldName)
+  // update 操作：主键自动包含，且 UI 中主键项不可取消
+  if (wizardForm.value.operationType === 'update' && pkName) {
+    wizardForm.value.requestFields = Array.from(new Set([pkName, ...nonPk]))
+  } else {
+    wizardForm.value.requestFields = nonPk
+  }
 }
 
 const clearAllRequestFields = () => {
-  wizardForm.value.requestFields = []
+  const pkName = getPrimaryKeyName()
+  if (wizardForm.value.operationType === 'update' && pkName) {
+    wizardForm.value.requestFields = [pkName]
+  } else {
+    wizardForm.value.requestFields = []
+  }
 }
 
 const loadGroups = async () => {
@@ -595,6 +657,8 @@ const onDataCenterGroupChange = async (groupId) => {
   wizardForm.value.returnFields = []
   wizardForm.value.requestFields = []
   wizardForm.value.conditionFields = []
+  // 对接：选择数据分组后，同步 API 所属分组为同一个分组
+  if (groupId) wizardForm.value.groupId = groupId
   await loadDataCenterTables(groupId)
 }
 
@@ -603,7 +667,14 @@ const onTableChange = async (tableName) => {
     try {
       const res = await api.getTableColumnsDirect(tableName)
       if (res.code === 200 || res.code === 0) {
-        tableColumns.value = res.data || []
+        // 统一字段结构：后端返回 columnKey/nullable，但本页面用 key/isNullable
+        tableColumns.value = (res.data || []).map(col => ({
+          ...col,
+          key: col.key ?? col.columnKey ?? null,
+          isNullable: col.isNullable ?? col.nullable ?? true,
+          fieldName: col.fieldName ?? col.columnName ?? '',
+          fieldType: col.fieldType ?? col.dataType ?? ''
+        }))
         // 自动选择所有返回字段
         selectAllReturnFields()
         // 自动选择所有请求字段（新增/编辑操作）
@@ -616,7 +687,6 @@ const onTableChange = async (tableName) => {
         }
         // 更新API名称
         generateApiName()
-        autoGenerateParams()
       } else {
         tableColumns.value = []
         wizardForm.value.returnFields = []
@@ -635,66 +705,6 @@ const onTableChange = async (tableName) => {
     wizardForm.value.requestFields = []
     wizardForm.value.conditionFields = []
   }
-}
-
-const autoGenerateParams = () => {
-  if (wizardForm.value.execMode === 'AUTO') {
-    wizardForm.value.requestParams = tableColumns.value.map(col => ({
-      paramName: col.columnName || col.fieldName,
-      paramType: mapFieldType(col.dataType || col.fieldType),
-      required: col.isNullable === false || col.key === 'PRI' ? 1 : 0,
-      description: col.remarks || ''
-    }))
-  }
-}
-
-const mapFieldType = (mysqlType) => {
-  if (!mysqlType) return 'String'
-  const type = mysqlType.toLowerCase()
-  if (type.includes('int') || type.includes('decimal') || type.includes('float') || type.includes('double')) {
-    return 'Integer'
-  }
-  if (type.includes('bool')) {
-    return 'Boolean'
-  }
-  if (type.includes('json') || type.includes('text')) {
-    return 'Object'
-  }
-  return 'String'
-}
-
-const insertTableName = (tableName) => {
-  wizardForm.value.sqlTemplate += tableName
-}
-
-const getDataCenterGroupName = (groupId) => {
-  if (!groupId) return '全部分组'
-  const group = flattenDataCenterGroups.value.find(g => g.id === groupId)
-  return group ? group.groupName : '-'
-}
-
-const getOperationText = (op) => {
-  const texts = {
-    list: '查询列表',
-    get: '查询单条',
-    create: '新增',
-    update: '更新',
-    delete: '删除'
-  }
-  return texts[op] || op
-}
-
-const addRequestParam = () => {
-  wizardForm.value.requestParams.push({
-    paramName: '',
-    paramType: 'String',
-    required: 0,
-    description: ''
-  })
-}
-
-const removeRequestParam = (index) => {
-  wizardForm.value.requestParams.splice(index, 1)
 }
 
 const prevStep = () => {
@@ -726,32 +736,22 @@ const handleCreate = async (skipRedirect = false) => {
       apiMethod: wizardForm.value.apiMethod || getOperationMethod(wizardForm.value.operationType),
       groupId: wizardForm.value.groupId,
       description: wizardForm.value.description,
-      
-      // 执行模式（固定为AUTO）
-      execMode: 'AUTO',
+
+      // 执行模式：后端动态执行逻辑以 sqlTemplate 是否为空为准，但为了和 generateCrudApi 统一，这里按 crud 记录
+      execMode: 'crud',
       dataCenterGroupId: wizardForm.value.dataCenterGroupId,
       tableName: wizardForm.value.tableName,
-      
-      // 操作类型映射
-      autoOperation: wizardForm.value.operationType === 'list' ? 'list' : 
-                    wizardForm.value.operationType === 'detail' ? 'get' : 
-                    wizardForm.value.operationType === 'add' ? 'create' : 
-                    wizardForm.value.operationType === 'update' ? 'update' : 'delete',
-      
-      // 响应格式（列表查询为分页，其他为对象）
-      responseFormat: wizardForm.value.operationType === 'list' ? 'page' : 'object',
-      
-      // 向后兼容字段
-      sqlTemplate: '',
-      requestParams: [],
-      
+
       // 新标准字段
       operationType: wizardForm.value.operationType,
       tenantAppId: null, // 暂时为空，后续可扩展
-      needToken: wizardForm.value.needToken ? 1 : 0,
-      returnFields: wizardForm.value.returnFields.length > 0 ? JSON.stringify(wizardForm.value.returnFields) : null,
-      requestFields: wizardForm.value.requestFields.length > 0 ? JSON.stringify(wizardForm.value.requestFields) : null,
-      conditionFields: wizardForm.value.conditionFields.length > 0 ? JSON.stringify(wizardForm.value.conditionFields) : null
+      authType: wizardForm.value.needToken ? 'TOKEN' : 'NONE',
+      sqlTemplate: '',
+
+      // 注意：不要 JSON.stringify，直接传数组/对象让后端 JacksonTypeHandler 正确落库
+      returnFields: wizardForm.value.returnFields.length > 0 ? wizardForm.value.returnFields : null,
+      requestFields: wizardForm.value.requestFields.length > 0 ? wizardForm.value.requestFields : null,
+      conditionFields: wizardForm.value.conditionFields.length > 0 ? wizardForm.value.conditionFields : null
     }
 
     const res = await api.createApi(apiData)
