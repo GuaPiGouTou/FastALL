@@ -16,10 +16,9 @@
     <div class="generator-content">
       <div class="steps-container">
         <el-steps :active="currentStep" align-center>
-          <el-step title="基础配置" :icon="Edit" />
-          <el-step title="执行逻辑" :icon="Operation" />
-          <el-step title="参数配置" :icon="Setting" />
-          <el-step title="完成" :icon="Check" />
+          <el-step title="选择数据表" :icon="Edit" />
+          <el-step title="选择操作类型" :icon="Operation" />
+          <el-step title="配置参数" :icon="Setting" />
         </el-steps>
       </div>
 
@@ -27,32 +26,63 @@
         <div v-show="currentStep === 0" class="step-content">
           <div class="step-title">
             <span class="step-num">01</span>
-            <span class="step-text">基础信息配置</span>
+            <span class="step-text">选择数据表</span>
           </div>
-          <el-form :model="wizardForm" label-width="100px" class="api-form">
-            <el-form-item label="API名称" required>
-              <el-input v-model="wizardForm.apiName" placeholder="请输入API名称，如：用户列表查询" />
-            </el-form-item>
-            <el-form-item label="API路径" required>
-              <el-input v-model="wizardForm.apiPath" placeholder="/user/list">
-                <template #prepend>/api/dynamic</template>
-              </el-input>
-            </el-form-item>
-            <el-form-item label="请求方法" required>
-              <el-radio-group v-model="wizardForm.apiMethod" class="method-group">
-                <el-radio-button label="GET">GET</el-radio-button>
-                <el-radio-button label="POST">POST</el-radio-button>
-                <el-radio-button label="PUT">PUT</el-radio-button>
-                <el-radio-button label="DELETE">DELETE</el-radio-button>
-              </el-radio-group>
-            </el-form-item>
-            <el-form-item label="所属分组">
-              <el-select v-model="wizardForm.groupId" style="width: 100%" placeholder="请选择分组">
-                <el-option v-for="g in groups" :key="g.id" :label="g.groupName" :value="g.id" />
+          <div class="api-path-preview">
+            <div class="path-label">API路径预览：</div>
+            <div class="path-value">
+              <span class="path-prefix">/api/v1/</span>
+              <span class="path-table">{{ wizardForm.tableName || '{tableName}' }}</span>
+              <span class="path-suffix">/{{ getOperationSuffix(wizardForm.operationType) || '{suffix}' }}</span>
+            </div>
+          </div>
+          <el-form :model="wizardForm" label-width="120px" class="api-form">
+            <el-form-item label="数据分组" required>
+              <el-select 
+                v-model="wizardForm.dataCenterGroupId" 
+                style="width: 100%" 
+                placeholder="请选择数据中心分组" 
+                @change="onDataCenterGroupChange"
+              >
+                <el-option label="全部分组" :value="null" />
+                <el-option v-for="g in flattenDataCenterGroups" :key="g.id" :label="g.groupName" :value="g.id">
+                  <span :style="{ paddingLeft: (g.level || 0) * 20 + 'px' }">{{ g.groupName }}</span>
+                </el-option>
               </el-select>
             </el-form-item>
-            <el-form-item label="描述">
-              <el-input v-model="wizardForm.description" type="textarea" :rows="2" placeholder="请输入API描述" />
+            <el-form-item label="数据表" required>
+              <el-select 
+                v-model="wizardForm.tableName" 
+                style="width: 100%" 
+                placeholder="请选择数据表" 
+                :loading="loadingTables"
+                @change="onTableChange"
+              >
+                <el-option 
+                  v-for="t in dataCenterTables" 
+                  :key="t.tableName" 
+                  :label="t.tableName + (t.description ? ' - ' + t.description : '')" 
+                  :value="t.tableName" 
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="表字段预览" v-if="tableColumns.length > 0">
+              <div class="field-preview">
+                <div class="field-preview-header">
+                  <span>字段名</span>
+                  <span>类型</span>
+                  <span>可空</span>
+                  <span>主键</span>
+                </div>
+                <div class="field-preview-list">
+                  <div v-for="col in tableColumns" :key="col.columnName || col.fieldName" class="field-preview-item">
+                    <span>{{ col.columnName || col.fieldName }}</span>
+                    <span class="field-type">{{ col.dataType || col.fieldType }}</span>
+                    <span>{{ col.isNullable ? '是' : '否' }}</span>
+                    <span>{{ col.key === 'PRI' ? '是' : '否' }}</span>
+                  </div>
+                </div>
+              </div>
             </el-form-item>
           </el-form>
         </div>
@@ -60,213 +90,312 @@
         <div v-show="currentStep === 1" class="step-content">
           <div class="step-title">
             <span class="step-num">02</span>
-            <span class="step-text">执行逻辑配置</span>
+            <span class="step-text">选择操作类型</span>
           </div>
-          <el-form :model="wizardForm" label-width="100px" class="api-form">
-            <el-form-item label="执行模式" required>
-              <el-radio-group v-model="wizardForm.execMode" class="exec-mode-group">
-                <el-radio-button label="AUTO">
-                  <div class="mode-content">
-                    <el-icon><Operation /></el-icon>
-                    <span>自动CRUD</span>
+          <div class="api-path-preview">
+            <div class="path-label">API路径预览：</div>
+            <div class="path-value">
+              <span class="path-prefix">/api/v1/</span>
+              <span class="path-table">{{ wizardForm.tableName || '{tableName}' }}</span>
+              <span class="path-suffix">/{{ getOperationSuffix(wizardForm.operationType) || '{suffix}' }}</span>
+            </div>
+            <div class="path-method">
+              <span class="method-label">请求方法：</span>
+              <span :class="['method-tag', `method-${getOperationMethod(wizardForm.operationType)?.toLowerCase() || 'get'}`]">
+                {{ getOperationMethod(wizardForm.operationType) || 'GET' }}
+              </span>
+            </div>
+          </div>
+          <el-form :model="wizardForm" label-width="120px" class="api-form">
+            <el-form-item label="操作类型" required>
+              <el-radio-group v-model="wizardForm.operationType" class="operation-type-group" @change="onOperationTypeChange">
+                <div class="operation-options">
+                  <div class="operation-option" :class="{ active: wizardForm.operationType === 'list' }" @click="wizardForm.operationType = 'list'">
+                    <div class="operation-icon">
+                      <el-icon><List /></el-icon>
+                    </div>
+                    <div class="operation-content">
+                      <div class="operation-title">列表查询</div>
+                      <div class="operation-desc">获取分页列表数据</div>
+                      <div class="operation-suffix">/list</div>
+                    </div>
                   </div>
-                </el-radio-button>
-                <el-radio-button label="SQL">
-                  <div class="mode-content">
-                    <el-icon><Document /></el-icon>
-                    <span>SQL模式</span>
+                  <div class="operation-option" :class="{ active: wizardForm.operationType === 'detail' }" @click="wizardForm.operationType = 'detail'">
+                    <div class="operation-icon">
+                      <el-icon><Document /></el-icon>
+                    </div>
+                    <div class="operation-content">
+                      <div class="operation-title">详情查询</div>
+                      <div class="operation-desc">根据主键获取单条记录</div>
+                      <div class="operation-suffix">/detail</div>
+                    </div>
                   </div>
-                </el-radio-button>
+                  <div class="operation-option" :class="{ active: wizardForm.operationType === 'add' }" @click="wizardForm.operationType = 'add'">
+                    <div class="operation-icon">
+                      <el-icon><Plus /></el-icon>
+                    </div>
+                    <div class="operation-content">
+                      <div class="operation-title">新增记录</div>
+                      <div class="operation-desc">创建新记录</div>
+                      <div class="operation-suffix">/add</div>
+                    </div>
+                  </div>
+                  <div class="operation-option" :class="{ active: wizardForm.operationType === 'update' }" @click="wizardForm.operationType = 'update'">
+                    <div class="operation-icon">
+                      <el-icon><Edit /></el-icon>
+                    </div>
+                    <div class="operation-content">
+                      <div class="operation-title">编辑记录</div>
+                      <div class="operation-desc">根据主键更新记录</div>
+                      <div class="operation-suffix">/update</div>
+                    </div>
+                  </div>
+                  <div class="operation-option" :class="{ active: wizardForm.operationType === 'delete' }" @click="wizardForm.operationType = 'delete'">
+                    <div class="operation-icon">
+                      <el-icon><Delete /></el-icon>
+                    </div>
+                    <div class="operation-content">
+                      <div class="operation-title">删除记录</div>
+                      <div class="operation-desc">根据主键删除记录</div>
+                      <div class="operation-suffix">/delete</div>
+                    </div>
+                  </div>
+                </div>
               </el-radio-group>
             </el-form-item>
-
-            <template v-if="wizardForm.execMode === 'AUTO'">
-              <el-form-item label="数据分组" required>
-                <el-select v-model="wizardForm.dataCenterGroupId" style="width: 100%" placeholder="请选择数据中心分组" @change="onDataCenterGroupChange">
-                  <el-option label="全部分组" :value="null" />
-                  <el-option v-for="g in flattenDataCenterGroups" :key="g.id" :label="g.groupName" :value="g.id">
-                    <span :style="{ paddingLeft: (g.level || 0) * 20 + 'px' }">{{ g.groupName }}</span>
-                  </el-option>
-                </el-select>
-              </el-form-item>
-              <el-form-item label="数据表" required>
-                <el-select v-model="wizardForm.tableName" style="width: 100%" placeholder="请选择数据表" :loading="loadingTables" @change="onTableChange">
-                  <el-option v-for="t in dataCenterTables" :key="t.tableName" :label="t.tableName + (t.description ? ' - ' + t.description : '')" :value="t.tableName" />
-                </el-select>
-              </el-form-item>
-              <el-form-item label="操作类型" required>
-                <el-radio-group v-model="wizardForm.autoOperation" class="operation-group">
-                  <el-radio label="list">查询列表</el-radio>
-                  <el-radio label="get">查询单条</el-radio>
-                  <el-radio label="create">新增</el-radio>
-                  <el-radio label="update">更新</el-radio>
-                  <el-radio label="delete">删除</el-radio>
-                </el-radio-group>
-              </el-form-item>
-              <el-form-item label="表字段" v-if="tableColumns.length > 0">
-                <div class="field-list">
-                  <el-tag v-for="col in tableColumns" :key="col.columnName || col.fieldName" class="field-tag" effect="plain">
-                    <span class="field-name">{{ col.columnName || col.fieldName }}</span>
-                    <span class="field-type">{{ col.dataType || col.fieldType }}</span>
-                  </el-tag>
-                </div>
-              </el-form-item>
-            </template>
-
-            <template v-if="wizardForm.execMode === 'SQL'">
-              <el-form-item label="数据分组" required>
-                <el-select v-model="wizardForm.dataCenterGroupId" style="width: 100%" placeholder="请选择数据中心分组" @change="onDataCenterGroupChange">
-                  <el-option label="全部分组" :value="null" />
-                  <el-option v-for="g in flattenDataCenterGroups" :key="g.id" :label="g.groupName" :value="g.id">
-                    <span :style="{ paddingLeft: (g.level || 0) * 20 + 'px' }">{{ g.groupName }}</span>
-                  </el-option>
-                </el-select>
-              </el-form-item>
-              <el-form-item label="SQL模板" required>
-                <el-input
-                  v-model="wizardForm.sqlTemplate"
-                  type="textarea"
-                  :rows="8"
-                  placeholder="SELECT * FROM user WHERE id = {{id}}"
-                  class="sql-input"
-                />
-              </el-form-item>
-              <el-form-item label="可用表">
-                <el-button size="small" @click="loadDataCenterTables(wizardForm.dataCenterGroupId)" :loading="loadingTables">
-                  <el-icon><Refresh /></el-icon>
-                  加载表列表
-                </el-button>
-                <div class="field-list" v-if="dataCenterTables.length > 0" style="margin-top: 10px;">
-                  <el-tag v-for="t in dataCenterTables" :key="t.tableName" class="field-tag clickable" @click="insertTableName(t.tableName)">
-                    {{ t.tableName }}
-                  </el-tag>
-                </div>
-              </el-form-item>
-            </template>
+            
+            <el-form-item label="API名称" required>
+              <el-input v-model="wizardForm.apiName" placeholder="根据操作类型自动生成，可手动修改">
+                <template #append>
+                  <el-button @click="generateApiName" type="primary" link>自动生成</el-button>
+                </template>
+              </el-input>
+            </el-form-item>
+            
+            <el-form-item label="API描述">
+              <el-input v-model="wizardForm.description" type="textarea" :rows="2" placeholder="请输入API描述" />
+            </el-form-item>
+            
+            <el-form-item label="所属分组">
+              <el-select v-model="wizardForm.groupId" style="width: 100%" placeholder="请选择分组">
+                <el-option v-for="g in groups" :key="g.id" :label="g.groupName" :value="g.id" />
+              </el-select>
+            </el-form-item>
           </el-form>
         </div>
 
         <div v-show="currentStep === 2" class="step-content">
           <div class="step-title">
             <span class="step-num">03</span>
-            <span class="step-text">参数配置</span>
+            <span class="step-text">配置参数</span>
           </div>
+          <div class="api-path-preview">
+            <div class="path-label">API路径：</div>
+            <div class="path-value final">
+              <span class="path-prefix">/api/v1/</span>
+              <span class="path-table">{{ wizardForm.tableName || '{tableName}' }}</span>
+              <span class="path-suffix">/{{ getOperationSuffix(wizardForm.operationType) || '{suffix}' }}</span>
+            </div>
+            <div class="path-method">
+              <span class="method-label">请求方法：</span>
+              <span :class="['method-tag', `method-${getOperationMethod(wizardForm.operationType)?.toLowerCase() || 'get'}`]">
+                {{ getOperationMethod(wizardForm.operationType) || 'GET' }}
+              </span>
+            </div>
+          </div>
+          
           <div class="params-section">
             <div class="section-header">
-              <span class="section-title">请求参数</span>
-              <el-button type="primary" size="small" @click="addRequestParam">
-                <el-icon><Plus /></el-icon>
-                添加参数
-              </el-button>
+              <span class="section-title">字段配置</span>
             </div>
-            <el-table :data="wizardForm.requestParams" size="small" v-if="wizardForm.requestParams.length > 0">
-              <el-table-column prop="paramName" label="参数名" width="130">
-                <template #default="scope">
-                  <el-input v-model="scope.row.paramName" size="small" placeholder="参数名" />
-                </template>
-              </el-table-column>
-              <el-table-column prop="paramType" label="类型" width="100">
-                <template #default="scope">
-                  <el-select v-model="scope.row.paramType" size="small">
-                    <el-option label="String" value="String" />
-                    <el-option label="Integer" value="Integer" />
-                    <el-option label="Boolean" value="Boolean" />
-                    <el-option label="Array" value="Array" />
-                    <el-option label="Object" value="Object" />
-                  </el-select>
-                </template>
-              </el-table-column>
-              <el-table-column prop="required" label="必填" width="60" align="center">
-                <template #default="scope">
-                  <el-checkbox v-model="scope.row.required" :true-value="1" :false-value="0" />
-                </template>
-              </el-table-column>
-              <el-table-column prop="description" label="描述">
-                <template #default="scope">
-                  <el-input v-model="scope.row.description" size="small" placeholder="描述" />
-                </template>
-              </el-table-column>
-              <el-table-column width="50" align="center">
-                <template #default="scope">
-                  <el-button type="danger" size="small" link @click="removeRequestParam(scope.$index)">
-                    <el-icon><Delete /></el-icon>
+            
+            <!-- 返回字段配置 -->
+            <div class="field-config-section">
+              <div class="field-config-header">
+                <div class="field-config-title">
+                  <span>返回字段</span>
+                  <span class="field-config-subtitle">（控制API响应包含哪些字段）</span>
+                </div>
+                <div class="field-config-actions">
+                  <el-button size="small" @click="selectAllReturnFields">
+                    <el-icon><Select /></el-icon>
+                    全选
                   </el-button>
-                </template>
-              </el-table-column>
-            </el-table>
-            <el-empty v-else description="暂无参数，点击上方按钮添加" :image-size="60" />
+                  <el-button size="small" @click="clearAllReturnFields">
+                    <el-icon><Close /></el-icon>
+                    清空
+                  </el-button>
+                </div>
+              </div>
+              <div class="field-config-hint" v-if="tableColumns.length === 0">
+                <el-empty description="请先在前面的步骤中选择数据表" :image-size="60" />
+              </div>
+              <div class="field-checkbox-group" v-else>
+                <el-checkbox-group v-model="wizardForm.returnFields" class="field-checkbox-list">
+                  <el-checkbox 
+                    v-for="col in tableColumns" 
+                    :key="col.columnName || col.fieldName" 
+                    :label="col.columnName || col.fieldName"
+                    class="field-checkbox-item"
+                  >
+                    <div class="field-checkbox-content">
+                      <span class="field-name">{{ col.columnName || col.fieldName }}</span>
+                      <span class="field-type">{{ col.dataType || col.fieldType }}</span>
+                      <span class="field-key" v-if="col.key === 'PRI'">主键</span>
+                      <span class="field-nullable" v-if="col.isNullable">可空</span>
+                    </div>
+                  </el-checkbox>
+                </el-checkbox-group>
+              </div>
+              <div class="field-config-note">
+                <el-icon><InfoFilled /></el-icon>
+                默认全选；若一个都不选 → 返回全部字段
+              </div>
+            </div>
+            
+            <!-- 请求字段配置（根据操作类型不同） -->
+            <div class="field-config-section" v-if="['add', 'update'].includes(wizardForm.operationType)">
+              <div class="field-config-header">
+                <div class="field-config-title">
+                  <span>请求字段</span>
+                  <span class="field-config-subtitle">（配置API接收哪些字段{{ wizardForm.operationType === 'add' ? '进行创建' : '进行更新' }}）</span>
+                </div>
+                <div class="field-config-actions">
+                  <el-button size="small" @click="selectAllRequestFields">
+                    <el-icon><Select /></el-icon>
+                    全选
+                  </el-button>
+                  <el-button size="small" @click="clearAllRequestFields">
+                    <el-icon><Close /></el-icon>
+                    清空
+                  </el-button>
+                </div>
+              </div>
+              <div class="field-checkbox-group" v-if="tableColumns.length > 0">
+                <el-checkbox-group v-model="wizardForm.requestFields" class="field-checkbox-list">
+                  <el-checkbox 
+                    v-for="col in filteredRequestColumns" 
+                    :key="col.columnName || col.fieldName" 
+                    :label="col.columnName || col.fieldName"
+                    class="field-checkbox-item"
+                    :disabled="col.key === 'PRI'"
+                  >
+                    <div class="field-checkbox-content">
+                      <span class="field-name">{{ col.columnName || col.fieldName }}</span>
+                      <span class="field-type">{{ col.dataType || col.fieldType }}</span>
+                      <span class="field-key" v-if="col.key === 'PRI'">主键</span>
+                      <span class="field-required" v-if="!col.isNullable && col.key !== 'PRI'">必填</span>
+                      <span class="field-nullable" v-if="col.isNullable">可空</span>
+                    </div>
+                  </el-checkbox>
+                </el-checkbox-group>
+              </div>
+              <div class="field-config-note">
+                <el-icon><InfoFilled /></el-icon>
+                <span v-if="wizardForm.operationType === 'add'">至少选择1个请求字段，否则创建按钮禁用</span>
+                <span v-if="wizardForm.operationType === 'update'">主键字段自动包含，不可取消</span>
+              </div>
+            </div>
+            
+            <!-- 查询条件配置（列表查询时） -->
+            <div class="field-config-section" v-if="wizardForm.operationType === 'list'">
+              <div class="field-config-header">
+                <div class="field-config-title">
+                  <span>查询条件字段</span>
+                  <span class="field-config-subtitle">（配置列表查询时可用的过滤条件）</span>
+                </div>
+              </div>
+              <div class="field-checkbox-group" v-if="tableColumns.length > 0">
+                <el-checkbox-group v-model="wizardForm.conditionFields" class="field-checkbox-list">
+                  <el-checkbox 
+                    v-for="col in tableColumns" 
+                    :key="col.columnName || col.fieldName" 
+                    :label="col.columnName || col.fieldName"
+                    class="field-checkbox-item"
+                  >
+                    <div class="field-checkbox-content">
+                      <span class="field-name">{{ col.columnName || col.fieldName }}</span>
+                      <span class="field-type">{{ col.dataType || col.fieldType }}</span>
+                      <span class="field-key" v-if="col.key === 'PRI'">主键</span>
+                    </div>
+                  </el-checkbox>
+                </el-checkbox-group>
+              </div>
+              <div class="field-config-note">
+                <el-icon><InfoFilled /></el-icon>
+                列表查询自动包含分页参数：page（页码）、pageSize（每页条数）、orderBy（排序字段）、sortDirection（排序方向）
+              </div>
+            </div>
           </div>
-
+          
+          <!-- 安全配置 -->
           <div class="params-section">
             <div class="section-header">
-              <span class="section-title">响应配置</span>
+              <span class="section-title">安全配置</span>
             </div>
-            <el-form :model="wizardForm" label-width="80px">
-              <el-form-item label="响应格式">
-                <el-select v-model="wizardForm.responseFormat" style="width: 200px">
-                  <el-option label="JSON对象" value="object" />
-                  <el-option label="JSON数组" value="array" />
-                  <el-option label="分页数据" value="page" />
-                </el-select>
+            <el-form :model="wizardForm" label-width="120px">
+              <el-form-item label="携带Token" required>
+                <el-switch
+                  v-model="wizardForm.needToken"
+                  active-text="开启"
+                  inactive-text="关闭"
+                  :active-value="true"
+                  :inactive-value="false"
+                  inline-prompt
+                  active-color="#13ce66"
+                  inactive-color="#ff4949"
+                />
+                <div class="security-note">
+                  <el-icon v-if="wizardForm.needToken" color="#13ce66"><SuccessFilled /></el-icon>
+                  <el-icon v-else color="#ff4949"><WarningFilled /></el-icon>
+                  <span v-if="wizardForm.needToken">开启：API需要验证token（推荐）</span>
+                  <span v-else class="warning-text">关闭：API为公开接口（安全风险！）</span>
+                </div>
+              </el-form-item>
+              <el-form-item label="二次确认" v-if="!wizardForm.needToken && ['add', 'update', 'delete'].includes(wizardForm.operationType)">
+                <el-alert
+                  title="安全警告"
+                  type="warning"
+                  description="对于新增/编辑/删除等写操作，强烈建议开启Token验证，否则可能被恶意调用！"
+                  show-icon
+                  :closable="false"
+                />
               </el-form-item>
             </el-form>
           </div>
-        </div>
-
-        <div v-show="currentStep === 3" class="step-content">
-          <div class="step-title">
-            <span class="step-num">04</span>
-            <span class="step-text">确认配置</span>
+          
+          <!-- 创建按钮区域 -->
+          <div class="create-section">
+            <el-button @click="prevStep" size="large">
+              <el-icon><ArrowLeft /></el-icon>
+              上一步
+            </el-button>
+            <el-button 
+              @click="handleCreate" 
+              type="success" 
+              size="large"
+              :loading="creating"
+              :disabled="!canCreate"
+            >
+              <el-icon><Check /></el-icon>
+              创建API
+            </el-button>
+            <el-button 
+              @click="handleCreateAndContinue" 
+              size="large"
+              :loading="creating"
+              :disabled="!canCreate"
+            >
+              <el-icon><Plus /></el-icon>
+              创建并继续
+            </el-button>
           </div>
-          <el-result icon="success" title="配置完成" sub-title="请确认以下配置信息后点击创建按钮">
-            <template #extra>
-              <el-descriptions :column="1" border class="confirm-desc">
-                <el-descriptions-item label="API名称">
-                  <span class="confirm-value">{{ wizardForm.apiName }}</span>
-                </el-descriptions-item>
-                <el-descriptions-item label="API路径">
-                  <span class="confirm-value path">/api/dynamic{{ wizardForm.apiPath }}</span>
-                </el-descriptions-item>
-                <el-descriptions-item label="请求方法">
-                  <span :class="['method-tag', `method-${wizardForm.apiMethod?.toLowerCase()}`]">
-                    {{ wizardForm.apiMethod }}
-                  </span>
-                </el-descriptions-item>
-                <el-descriptions-item label="执行模式">
-                  <el-tag effect="plain">{{ wizardForm.execMode === 'AUTO' ? '自动CRUD' : 'SQL模式' }}</el-tag>
-                </el-descriptions-item>
-                <el-descriptions-item label="数据分组">
-                  <span class="confirm-value">{{ getDataCenterGroupName(wizardForm.dataCenterGroupId) }}</span>
-                </el-descriptions-item>
-                <el-descriptions-item label="数据表" v-if="wizardForm.execMode === 'AUTO'">
-                  <span class="confirm-value">{{ wizardForm.tableName }}</span>
-                </el-descriptions-item>
-                <el-descriptions-item label="操作类型" v-if="wizardForm.execMode === 'AUTO'">
-                  <el-tag effect="plain">{{ getOperationText(wizardForm.autoOperation) }}</el-tag>
-                </el-descriptions-item>
-              </el-descriptions>
-            </template>
-          </el-result>
         </div>
+
+
       </div>
 
-      <div class="step-footer">
-        <el-button @click="prevStep" v-if="currentStep > 0">
-          <el-icon><ArrowLeft /></el-icon>
-          上一步
-        </el-button>
-        <el-button @click="nextStep" v-if="currentStep < 3" type="primary">
-          下一步
-          <el-icon><ArrowRight /></el-icon>
-        </el-button>
-        <el-button @click="handleCreate" v-if="currentStep === 3" type="success" :loading="creating">
-          <el-icon><Check /></el-icon>
-          创建API
-        </el-button>
-        <el-button @click="handleCreateAndContinue" v-if="currentStep === 3" :loading="creating">
-          创建并继续
-        </el-button>
-      </div>
+
     </div>
   </div>
 </template>
@@ -277,7 +406,8 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { 
   Plus, Delete, Edit, Operation, Setting, Check, ArrowLeft, ArrowRight, 
-  Refresh, MagicStick, Document, Back
+  Refresh, MagicStick, Document, Back, List, Select, Close, 
+  InfoFilled, SuccessFilled, WarningFilled
 } from '@element-plus/icons-vue'
 import * as api from '@/api/apiManagerV2'
 
@@ -293,18 +423,25 @@ const dataCenterTables = ref([])
 const tableColumns = ref([])
 
 const wizardForm = ref({
-  apiName: '',
-  apiPath: '',
-  apiMethod: 'GET',
-  groupId: null,
-  description: '',
-  execMode: 'AUTO',
+  // 步骤1：选择数据表
   dataCenterGroupId: null,
   tableName: '',
-  sqlTemplate: '',
-  autoOperation: 'list',
-  responseFormat: 'object',
-  requestParams: []
+  
+  // 步骤2：选择操作类型
+  operationType: 'list',
+  apiName: '',
+  description: '',
+  groupId: null,
+  
+  // 步骤3：配置参数
+  needToken: true,
+  returnFields: [],      // 返回字段列表
+  requestFields: [],     // 请求字段列表（新增/编辑时）
+  conditionFields: [],   // 查询条件字段列表（列表查询时）
+  
+  // 向后兼容字段
+  apiMethod: 'GET',      // 根据操作类型自动设置
+  apiPath: '',           // 根据表名和操作类型自动生成
 })
 
 const flattenDataCenterGroups = computed(() => {
@@ -320,6 +457,103 @@ const flattenDataCenterGroups = computed(() => {
   flatten(dataCenterGroups.value)
   return result
 })
+
+// 计算属性：过滤请求字段（排除主键）
+const filteredRequestColumns = computed(() => {
+  return tableColumns.value.filter(col => col.key !== 'PRI')
+})
+
+// 计算属性：是否可以创建API
+const canCreate = computed(() => {
+  // 基本验证
+  if (!wizardForm.value.tableName || !wizardForm.value.operationType) {
+    return false
+  }
+  
+  // API名称必填
+  if (!wizardForm.value.apiName?.trim()) {
+    return false
+  }
+  
+  // 对于新增操作，至少需要一个请求字段
+  if (wizardForm.value.operationType === 'add' && wizardForm.value.requestFields.length === 0) {
+    return false
+  }
+  
+  // 对于编辑操作，至少需要一个请求字段（主键除外）
+  if (wizardForm.value.operationType === 'update' && wizardForm.value.requestFields.length === 0) {
+    return false
+  }
+  
+  return true
+})
+
+// 操作类型映射方法
+const getOperationSuffix = (operationType) => {
+  const suffixMap = {
+    list: 'list',
+    detail: 'detail',
+    add: 'add',
+    update: 'update',
+    delete: 'delete'
+  }
+  return suffixMap[operationType] || ''
+}
+
+const getOperationMethod = (operationType) => {
+  const methodMap = {
+    list: 'GET',
+    detail: 'GET',
+    add: 'POST',
+    update: 'POST',
+    delete: 'POST'
+  }
+  return methodMap[operationType] || 'GET'
+}
+
+// 操作类型变化处理
+const onOperationTypeChange = (operationType) => {
+  // 更新API方法
+  wizardForm.value.apiMethod = getOperationMethod(operationType)
+  
+  // 自动生成API名称
+  generateApiName()
+}
+
+// 生成API名称
+const generateApiName = () => {
+  if (!wizardForm.value.tableName || !wizardForm.value.operationType) return
+  
+  const tableName = wizardForm.value.tableName
+  const operationType = wizardForm.value.operationType
+  
+  const nameMap = {
+    list: `获取${tableName}列表`,
+    detail: `获取${tableName}详情`,
+    add: `创建${tableName}`,
+    update: `更新${tableName}`,
+    delete: `删除${tableName}`
+  }
+  
+  wizardForm.value.apiName = nameMap[operationType] || `API: ${tableName}`
+}
+
+// 字段选择辅助方法
+const selectAllReturnFields = () => {
+  wizardForm.value.returnFields = tableColumns.value.map(col => col.columnName || col.fieldName)
+}
+
+const clearAllReturnFields = () => {
+  wizardForm.value.returnFields = []
+}
+
+const selectAllRequestFields = () => {
+  wizardForm.value.requestFields = filteredRequestColumns.value.map(col => col.columnName || col.fieldName)
+}
+
+const clearAllRequestFields = () => {
+  wizardForm.value.requestFields = []
+}
 
 const loadGroups = async () => {
   const res = await api.getApiGroups()
@@ -358,16 +592,48 @@ const onDataCenterGroupChange = async (groupId) => {
   wizardForm.value.tableName = ''
   tableColumns.value = []
   dataCenterTables.value = []
+  wizardForm.value.returnFields = []
+  wizardForm.value.requestFields = []
+  wizardForm.value.conditionFields = []
   await loadDataCenterTables(groupId)
 }
 
 const onTableChange = async (tableName) => {
   if (tableName) {
-    const res = await api.getTableColumnsDirect(tableName)
-    if (res.code === 200 || res.code === 0) {
-      tableColumns.value = res.data || []
-      autoGenerateParams()
+    try {
+      const res = await api.getTableColumnsDirect(tableName)
+      if (res.code === 200 || res.code === 0) {
+        tableColumns.value = res.data || []
+        // 自动选择所有返回字段
+        selectAllReturnFields()
+        // 自动选择所有请求字段（新增/编辑操作）
+        if (['add', 'update'].includes(wizardForm.value.operationType)) {
+          selectAllRequestFields()
+        }
+        // 自动选择所有查询条件字段（列表查询）
+        if (wizardForm.value.operationType === 'list') {
+          wizardForm.value.conditionFields = tableColumns.value.map(col => col.columnName || col.fieldName)
+        }
+        // 更新API名称
+        generateApiName()
+        autoGenerateParams()
+      } else {
+        tableColumns.value = []
+        wizardForm.value.returnFields = []
+        wizardForm.value.requestFields = []
+        wizardForm.value.conditionFields = []
+      }
+    } catch (error) {
+      tableColumns.value = []
+      wizardForm.value.returnFields = []
+      wizardForm.value.requestFields = []
+      wizardForm.value.conditionFields = []
     }
+  } else {
+    tableColumns.value = []
+    wizardForm.value.returnFields = []
+    wizardForm.value.requestFields = []
+    wizardForm.value.conditionFields = []
   }
 }
 
@@ -438,89 +704,125 @@ const prevStep = () => {
 }
 
 const nextStep = () => {
-  if (currentStep.value === 0) {
-    if (!wizardForm.value.apiName || !wizardForm.value.apiPath) {
-      ElMessage.warning('请填写API名称和路径')
-      return
+  if (currentStep.value < 2) {
+    // 步骤0 → 步骤1：自动生成API名称和路径
+    if (currentStep.value === 0 && wizardForm.value.tableName) {
+      generateApiName()
+      // 生成API路径
+      wizardForm.value.apiPath = `/api/v1/${wizardForm.value.tableName}/${getOperationSuffix(wizardForm.value.operationType)}`
     }
-  }
-  if (currentStep.value === 1) {
-    if (wizardForm.value.execMode === 'AUTO' && !wizardForm.value.tableName) {
-      ElMessage.warning('请选择数据表')
-      return
-    }
-    if (wizardForm.value.execMode === 'SQL' && !wizardForm.value.sqlTemplate) {
-      ElMessage.warning('请填写SQL模板')
-      return
-    }
-  }
-  if (currentStep.value < 3) {
     currentStep.value++
   }
 }
 
-const handleCreate = async () => {
-  await createApi()
-  router.push('/tool/api-manager')
-}
-
-const handleCreateAndContinue = async () => {
-  await createApi()
-  resetForm()
-}
-
-const createApi = async () => {
+const handleCreate = async (skipRedirect = false) => {
   creating.value = true
   try {
-    const data = {
+    // 构建符合新标准的数据对象
+    let apiData = {
+      // 基础信息
       apiName: wizardForm.value.apiName,
-      apiPath: wizardForm.value.apiPath,
-      apiMethod: wizardForm.value.apiMethod,
+      apiPath: wizardForm.value.apiPath || `/api/v1/${wizardForm.value.tableName}/${getOperationSuffix(wizardForm.value.operationType)}`,
+      apiMethod: wizardForm.value.apiMethod || getOperationMethod(wizardForm.value.operationType),
       groupId: wizardForm.value.groupId,
       description: wizardForm.value.description,
-      execMode: wizardForm.value.execMode,
+      
+      // 执行模式（固定为AUTO）
+      execMode: 'AUTO',
       dataCenterGroupId: wizardForm.value.dataCenterGroupId,
       tableName: wizardForm.value.tableName,
-      sqlTemplate: wizardForm.value.sqlTemplate,
-      authType: 'TOKEN',
-      rateLimit: 0,
-      corsEnabled: 1,
-      mockEnabled: 0,
-      requestParams: wizardForm.value.requestParams,
-      responseParams: []
+      
+      // 操作类型映射
+      autoOperation: wizardForm.value.operationType === 'list' ? 'list' : 
+                    wizardForm.value.operationType === 'detail' ? 'get' : 
+                    wizardForm.value.operationType === 'add' ? 'create' : 
+                    wizardForm.value.operationType === 'update' ? 'update' : 'delete',
+      
+      // 响应格式（列表查询为分页，其他为对象）
+      responseFormat: wizardForm.value.operationType === 'list' ? 'page' : 'object',
+      
+      // 向后兼容字段
+      sqlTemplate: '',
+      requestParams: [],
+      
+      // 新标准字段
+      operationType: wizardForm.value.operationType,
+      tenantAppId: null, // 暂时为空，后续可扩展
+      needToken: wizardForm.value.needToken ? 1 : 0,
+      returnFields: wizardForm.value.returnFields.length > 0 ? JSON.stringify(wizardForm.value.returnFields) : null,
+      requestFields: wizardForm.value.requestFields.length > 0 ? JSON.stringify(wizardForm.value.requestFields) : null,
+      conditionFields: wizardForm.value.conditionFields.length > 0 ? JSON.stringify(wizardForm.value.conditionFields) : null
     }
-    
-    const res = await api.createApi(data)
+
+    const res = await api.createApi(apiData)
     if (res.code === 200 || res.code === 0) {
       ElMessage.success('创建成功')
+      if (!skipRedirect) {
+        router.push('/tool/api-manager')
+      }
       return true
     } else {
       ElMessage.error(res.msg || '创建失败')
       return false
     }
-  } catch (e) {
-    ElMessage.error('创建失败: ' + e.message)
+  } catch (error) {
+    ElMessage.error(error.message || '创建失败')
     return false
   } finally {
     creating.value = false
   }
 }
 
+const handleCreateAndContinue = async () => {
+  const success = await handleCreate(true)
+  if (success) {
+    // 重置表单，保留一些默认值
+    wizardForm.value = {
+      dataCenterGroupId: wizardForm.value.dataCenterGroupId, // 保持相同分组
+      tableName: '',
+      operationType: 'list',
+      apiName: '',
+      description: '',
+      groupId: wizardForm.value.groupId, // 保持相同分组
+      needToken: true,
+      returnFields: [],
+      requestFields: [],
+      conditionFields: [],
+      apiMethod: 'GET',
+      apiPath: ''
+    }
+    // 重置步骤到第一步
+    currentStep.value = 0
+    // 清空表字段
+    tableColumns.value = []
+    ElMessage.success('API已创建，可以继续创建下一个')
+  }
+}
+
+
+
 const resetForm = () => {
   currentStep.value = 0
   wizardForm.value = {
-    apiName: '',
-    apiPath: '',
-    apiMethod: 'GET',
-    groupId: null,
-    description: '',
-    execMode: 'AUTO',
+    // 步骤1：选择数据表
     dataCenterGroupId: null,
     tableName: '',
-    sqlTemplate: '',
-    autoOperation: 'list',
-    responseFormat: 'object',
-    requestParams: []
+    
+    // 步骤2：选择操作类型
+    operationType: 'list',
+    apiName: '',
+    description: '',
+    groupId: null,
+    
+    // 步骤3：配置参数
+    needToken: true,
+    returnFields: [],
+    requestFields: [],
+    conditionFields: [],
+    
+    // 向后兼容字段
+    apiMethod: 'GET',
+    apiPath: ''
   }
   tableColumns.value = []
   dataCenterTables.value = []
@@ -785,4 +1087,338 @@ onMounted(() => {
 :deep(.el-tag) {
   border-radius: 4px;
 }
+
+/* 新标准样式 */
+.api-path-preview {
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: #f5f7fa;
+  border-radius: 8px;
+  border: 1px solid #e4e7ed;
+}
+
+.api-path-preview .path-label {
+  font-size: 14px;
+  color: #606266;
+  margin-bottom: 8px;
+}
+
+.api-path-preview .path-value {
+  font-size: 18px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  color: #409eff;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background-color: white;
+  border-radius: 4px;
+  border: 1px solid #dcdfe6;
+}
+
+.api-path-preview .path-value.final {
+  color: #67c23a;
+  font-weight: 600;
+}
+
+.api-path-preview .path-prefix {
+  color: #909399;
+}
+
+.api-path-preview .path-table {
+  color: #409eff;
+  font-weight: 600;
+}
+
+.api-path-preview .path-suffix {
+  color: #e6a23c;
+}
+
+.api-path-preview .path-method {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.api-path-preview .method-label {
+  font-size: 14px;
+  color: #606266;
+}
+
+.api-path-preview .method-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+.api-path-preview .method-get {
+  background-color: #67c23a;
+}
+
+.api-path-preview .method-post {
+  background-color: #409eff;
+}
+
+.api-path-preview .method-put {
+  background-color: #e6a23c;
+}
+
+.api-path-preview .method-delete {
+  background-color: #f56c6c;
+}
+
+/* 字段预览 */
+.field-preview {
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.field-preview-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  background-color: #f5f7fa;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #606266;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.field-preview-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.field-preview-item {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.field-preview-item:last-child {
+  border-bottom: none;
+}
+
+.field-preview-item .field-type {
+  color: #e6a23c;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+/* 操作类型选择 */
+.operation-type-group {
+  width: 100%;
+}
+
+.operation-options {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.operation-option {
+  border: 2px solid #e4e7ed;
+  border-radius: 8px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.operation-option:hover {
+  border-color: #409eff;
+  background-color: #f5f7fa;
+}
+
+.operation-option.active {
+  border-color: #409eff;
+  background-color: #ecf5ff;
+}
+
+.operation-icon {
+  font-size: 32px;
+  color: #409eff;
+  margin-bottom: 12px;
+}
+
+.operation-option.active .operation-icon {
+  color: #67c23a;
+}
+
+.operation-content {
+  flex: 1;
+}
+
+.operation-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 4px;
+}
+
+.operation-desc {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 8px;
+}
+
+.operation-suffix {
+  font-size: 13px;
+  color: #e6a23c;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+/* 字段配置 */
+.field-config-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  background-color: #f9fafc;
+  border-radius: 8px;
+  border: 1px solid #e4e7ed;
+}
+
+.field-config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.field-config-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.field-config-subtitle {
+  font-size: 13px;
+  color: #909399;
+  margin-left: 8px;
+}
+
+.field-config-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.field-config-hint {
+  text-align: center;
+  padding: 20px;
+}
+
+.field-checkbox-group {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 8px;
+  background-color: white;
+  border-radius: 4px;
+  border: 1px solid #e4e7ed;
+}
+
+.field-checkbox-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 8px;
+}
+
+.field-checkbox-item {
+  margin-right: 0 !important;
+  padding: 8px;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.field-checkbox-item:hover {
+  border-color: #409eff;
+  background-color: #f5f7fa;
+}
+
+.field-checkbox-item.is-checked {
+  border-color: #409eff;
+  background-color: #ecf5ff;
+}
+
+.field-checkbox-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.field-checkbox-content .field-name {
+  font-weight: 600;
+  color: #303133;
+}
+
+.field-checkbox-content .field-type {
+  color: #e6a23c;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+}
+
+.field-checkbox-content .field-key,
+.field-checkbox-content .field-required,
+.field-checkbox-content .field-nullable {
+  font-size: 11px;
+  padding: 1px 4px;
+  border-radius: 2px;
+  background-color: #f0f2f5;
+  color: #606266;
+}
+
+.field-checkbox-content .field-key {
+  background-color: #fef0f0;
+  color: #f56c6c;
+}
+
+.field-checkbox-content .field-required {
+  background-color: #f0f9eb;
+  color: #67c23a;
+}
+
+.field-checkbox-content .field-nullable {
+  background-color: #f4f4f5;
+  color: #909399;
+}
+
+.field-config-note {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #909399;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 安全配置 */
+.security-note {
+  margin-top: 8px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.security-note .warning-text {
+  color: #f56c6c;
+}
+```
+/* 创建按钮区域 */
+.create-section {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #e4e7ed;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-right: 20px;
+}
 </style>
+```
