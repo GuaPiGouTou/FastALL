@@ -576,6 +576,11 @@ public class ApiDefinitionServiceImpl extends ServiceImpl<ApiDefinitionMapper, A
         if (dto.getMockData() != null) api.setMockData(dto.getMockData());
         if (dto.getEnvironment() != null) api.setEnvironment(dto.getEnvironment());
         if (dto.getStatus() != null) api.setStatus(dto.getStatus());
+        if (dto.getOperationType() != null) api.setOperationType(dto.getOperationType());
+        if (dto.getTenantAppId() != null) api.setTenantAppId(dto.getTenantAppId());
+        if (dto.getReturnFields() != null) api.setReturnFields(dto.getReturnFields());
+        if (dto.getRequestFields() != null) api.setRequestFields(dto.getRequestFields());
+        if (dto.getConditionFields() != null) api.setConditionFields(dto.getConditionFields());
     }
 
     private ApiDefinitionDTO.ApiParameterDTO convertParamToDTO(ApiParameter param) {

@@ -1113,16 +1113,20 @@ public class DataCenterServiceImpl implements DataCenterService {
         
         try {
             List<Map<String, Object>> columns = getTableColumnInfos(tableName);
-            String apiPath = "/api/v1/" + tableName;
             
             if (Boolean.TRUE.equals(options.get("generateList"))) {
                 Map<String, Object> listApi = new HashMap<>();
                 listApi.put("apiName", "获取" + tableName + "列表");
-                listApi.put("apiPath", apiPath);
+                listApi.put("apiPath", "/api/v1/" + tableName + "/list");
                 listApi.put("apiMethod", "GET");
                 listApi.put("description", "获取" + tableName + "表的分页列表数据");
                 listApi.put("tableName", tableName);
                 listApi.put("execMode", "crud");
+                listApi.put("operationType", "list");
+                listApi.put("authType", "TOKEN");
+                listApi.put("returnFields", new ArrayList<>());
+                listApi.put("requestFields", new HashMap<>());
+                listApi.put("conditionFields", new HashMap<>());
                 listApi.put("columns", columns);
                 generatedApis.add(listApi);
             }
@@ -1130,11 +1134,16 @@ public class DataCenterServiceImpl implements DataCenterService {
             if (Boolean.TRUE.equals(options.get("generateDetail"))) {
                 Map<String, Object> detailApi = new HashMap<>();
                 detailApi.put("apiName", "获取" + tableName + "详情");
-                detailApi.put("apiPath", apiPath + "/{id}");
+                detailApi.put("apiPath", "/api/v1/" + tableName + "/detail");
                 detailApi.put("apiMethod", "GET");
                 detailApi.put("description", "根据ID获取" + tableName + "表的单条记录详情");
                 detailApi.put("tableName", tableName);
                 detailApi.put("execMode", "crud");
+                detailApi.put("operationType", "detail");
+                detailApi.put("authType", "TOKEN");
+                detailApi.put("returnFields", new ArrayList<>());
+                detailApi.put("requestFields", new HashMap<>());
+                detailApi.put("conditionFields", new HashMap<>());
                 detailApi.put("columns", columns);
                 generatedApis.add(detailApi);
             }
@@ -1142,11 +1151,16 @@ public class DataCenterServiceImpl implements DataCenterService {
             if (Boolean.TRUE.equals(options.get("generateCreate"))) {
                 Map<String, Object> createApi = new HashMap<>();
                 createApi.put("apiName", "创建" + tableName);
-                createApi.put("apiPath", apiPath);
+                createApi.put("apiPath", "/api/v1/" + tableName + "/add");
                 createApi.put("apiMethod", "POST");
                 createApi.put("description", "在" + tableName + "表中创建新记录");
                 createApi.put("tableName", tableName);
                 createApi.put("execMode", "crud");
+                createApi.put("operationType", "add");
+                createApi.put("authType", "TOKEN");
+                createApi.put("returnFields", new ArrayList<>());
+                createApi.put("requestFields", new HashMap<>());
+                createApi.put("conditionFields", new HashMap<>());
                 createApi.put("columns", columns);
                 generatedApis.add(createApi);
             }
@@ -1154,11 +1168,16 @@ public class DataCenterServiceImpl implements DataCenterService {
             if (Boolean.TRUE.equals(options.get("generateUpdate"))) {
                 Map<String, Object> updateApi = new HashMap<>();
                 updateApi.put("apiName", "更新" + tableName);
-                updateApi.put("apiPath", apiPath + "/{id}");
-                updateApi.put("apiMethod", "PUT");
+                updateApi.put("apiPath", "/api/v1/" + tableName + "/update");
+                updateApi.put("apiMethod", "POST");
                 updateApi.put("description", "根据ID更新" + tableName + "表的记录");
                 updateApi.put("tableName", tableName);
                 updateApi.put("execMode", "crud");
+                updateApi.put("operationType", "update");
+                updateApi.put("authType", "TOKEN");
+                updateApi.put("returnFields", new ArrayList<>());
+                updateApi.put("requestFields", new HashMap<>());
+                updateApi.put("conditionFields", new HashMap<>());
                 updateApi.put("columns", columns);
                 generatedApis.add(updateApi);
             }
@@ -1166,11 +1185,16 @@ public class DataCenterServiceImpl implements DataCenterService {
             if (Boolean.TRUE.equals(options.get("generateDelete"))) {
                 Map<String, Object> deleteApi = new HashMap<>();
                 deleteApi.put("apiName", "删除" + tableName);
-                deleteApi.put("apiPath", apiPath + "/{id}");
-                deleteApi.put("apiMethod", "DELETE");
+                deleteApi.put("apiPath", "/api/v1/" + tableName + "/delete");
+                deleteApi.put("apiMethod", "POST");
                 deleteApi.put("description", "根据ID删除" + tableName + "表的记录");
                 deleteApi.put("tableName", tableName);
                 deleteApi.put("execMode", "crud");
+                deleteApi.put("operationType", "delete");
+                deleteApi.put("authType", "TOKEN");
+                deleteApi.put("returnFields", new ArrayList<>());
+                deleteApi.put("requestFields", new HashMap<>());
+                deleteApi.put("conditionFields", new HashMap<>());
                 generatedApis.add(deleteApi);
             }
             

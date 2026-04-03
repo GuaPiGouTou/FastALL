@@ -52,10 +52,17 @@ CREATE TABLE `api_definition` (
   `mock_data` TEXT COMMENT 'Mock数据JSON',
   
   -- 环境配置
-  `environment` VARCHAR(20) NOT NULL DEFAULT 'dev' COMMENT '环境: dev/test/prod',
-  
-  -- 状态管理
-  `status` VARCHAR(20) NOT NULL DEFAULT 'draft' COMMENT '状态: draft-草稿, published-已发布, offline-已下线',
+    `environment` VARCHAR(20) NOT NULL DEFAULT 'dev' COMMENT '环境: dev/test/prod',
+    
+    -- 标准CRUD配置
+    `operation_type` VARCHAR(20) COMMENT '操作类型: list/detail/add/update/delete',
+    `tenant_app_id` VARCHAR(100) COMMENT '租户应用ID',
+    `return_fields` JSON COMMENT '返回字段配置JSON',
+    `request_fields` JSON COMMENT '请求字段配置JSON',
+    `condition_fields` JSON COMMENT '查询条件字段配置JSON',
+    
+    -- 状态管理
+    `status` VARCHAR(20) NOT NULL DEFAULT 'draft' COMMENT '状态: draft-草稿, published-已发布, offline-已下线',
   `publish_time` DATETIME COMMENT '发布时间',
   `publish_user` VARCHAR(50) COMMENT '发布人',
   

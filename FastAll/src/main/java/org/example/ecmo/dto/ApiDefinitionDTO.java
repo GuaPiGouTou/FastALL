@@ -65,6 +65,16 @@ public class ApiDefinitionDTO {
 
     private String status;
 
+    private String operationType;
+    
+    private String tenantAppId;
+    
+    private Object returnFields;
+    
+    private Object requestFields;
+    
+    private Object conditionFields;
+
     private LocalDateTime publishTime;
 
     private String publishUser;
