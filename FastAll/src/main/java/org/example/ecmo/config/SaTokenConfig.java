@@ -14,7 +14,13 @@ public class SaTokenConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new SaInterceptor(handler -> {
             SaRouter.match("/api/**")
-                .excludePathPatterns("/captcha/get", "/captcha/check")
+                // 验证码接口允许匿名访问（兼容前端/网关可能带 /api 前缀）
+                .excludePathPatterns(
+                    "/captcha/get",
+                    "/captcha/check",
+                    "/api/captcha/get",
+                    "/api/captcha/check"
+                )
                 .notMatch("/api/auth/**")
                 .notMatch("/api/file/upload")
                 .notMatch("/api/file/upload/**")
