@@ -743,7 +743,8 @@ const handleCreate = async (skipRedirect = false) => {
       tableName: wizardForm.value.tableName,
 
       // 新标准字段
-      operationType: wizardForm.value.operationType,
+      // operation_type 列在部分老库可能尚未迁移；动态执行当前不依赖它，因此避免写入以保证创建成功
+      // operationType: wizardForm.value.operationType,
       tenantAppId: null, // 暂时为空，后续可扩展
       authType: wizardForm.value.needToken ? 'TOKEN' : 'NONE',
       sqlTemplate: '',
